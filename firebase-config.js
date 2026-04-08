@@ -1,5 +1,5 @@
-// 준호님의 파이어베이스 설정값
 const firebaseConfig = {
+    // ... 준호님의 기존 설정값 그대로 유지 ...
     apiKey: "AIzaSyDjvv8ezS7OJgfwEfEh8Xwou9_bW7jzJ3w",
     authDomain: "kimmoksu-35d62.firebaseapp.com",
     projectId: "kimmoksu-35d62",
@@ -9,16 +9,16 @@ const firebaseConfig = {
     measurementId: "G-W7QBSQTX3J"
 };
 
-// 파이어베이스 초기화
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth(); // 이 줄을 추가해서 인증 기능을 켭니다.
 
-// 로그인 체크 함수 (로그인 안 되어 있으면 메인으로 보냄)
+// 로그인 체크 함수 업그레이드
 function authCheck() {
-    const teamId = localStorage.getItem('teamId');
-    if (!teamId) {
-        alert("로그인이 필요합니다.");
+    const user = auth.currentUser;
+    if (!user) {
+        // 로그인이 안 되어 있다면 메인으로 보냄
         location.href = 'index.html';
     }
-    return teamId;
+    return user;
 }
