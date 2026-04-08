@@ -9,75 +9,77 @@
     --input-bg: #374151; 
 }
 
-body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; color: var(--text); line-height: 1.5; }
-.container { max-width: 500px; margin: auto; padding: 15px; box-sizing: border-box; }
+body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
+.container { max-width: 500px; margin: auto; padding: 20px; box-sizing: border-box; }
 
-/* [상단바 영역] 로고와 ⋮ 버튼을 한 줄로 */
-.top-nav { 
+/* [공통] 모든 버튼 및 입력창 그림자 강제 제거 */
+button, input, .card { box-shadow: none !important; -webkit-appearance: none; }
+
+/* [메인] 상단 바 및 로고 중앙 정렬 */
+.top-nav { position: relative; padding: 20px 0; display: flex; justify-content: center; align-items: center; }
+.nav-logo { width: 100%; max-width: 240px; height: auto; object-fit: contain; }
+.more-btn-wrapper { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+
+/* [로그인] 자동로그인 체크박스 좌측 정렬 */
+.remember-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* 왼쪽 끝으로 */
+    gap: 8px;
+    margin: 5px 0 20px 2px;
+    color: #9ca3af;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.remember-wrapper input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+
+/* [T5] 섹션 제목과 입력란 사이 간격 확보 */
+.section-title { 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    margin-bottom: 20px; /* 여기서 간격을 줘서 입력란과 띄웁니다 */
     display: flex; 
     justify-content: space-between; 
-    align-items: center; 
-    padding: 10px 0; 
-    margin-bottom: 20px;
+    align-items: center;
 }
-.nav-logo { height: 35px; width: auto; object-fit: contain; cursor: pointer; }
 
-/* [드롭다운 메뉴] */
-.dropdown-wrapper { position: relative; }
-.more-btn { background: none; border: none; color: var(--text); font-size: 1.8rem; cursor: pointer; padding: 0 5px; }
-.dropdown-menu {
-    display: none !important; /* 기본은 숨김 */
-    position: absolute;
-    top: 40px;
-    right: 0;
-    background-color: var(--card);
-    border: 1px solid #374151;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    z-index: 1000;
-    min-width: 150px;
-    overflow: hidden;
+/* [입력란] 세련된 라운딩 및 간격 */
+input { 
+    padding: 15px 18px; 
+    border: 1px solid #4b5563; 
+    border-radius: 12px; 
+    width: 100%; 
+    margin-bottom: 12px; 
+    background: var(--input-bg); 
+    color: white; 
+    box-sizing: border-box; 
+    font-size: 1rem;
+    outline: none;
 }
-.dropdown-menu.show { display: block !important; }
-.dropdown-menu button {
-    display: block; width: 100%; padding: 14px 16px; text-align: left;
-    background: none; color: var(--text); font-size: 0.9rem; border: none;
-    border-bottom: 1px solid #374151; cursor: pointer;
-}
-.dropdown-menu button:last-child { border-bottom: none; }
-.dropdown-menu button:active { background-color: #374151; }
 
-/* [메시지 영역] */
-.welcome-area { margin-bottom: 30px; padding-left: 5px; }
-.welcome-area h3 { margin: 0; color: var(--primary); font-size: 1.3rem; }
-.welcome-area p { margin: 5px 0 0 0; font-size: 0.85rem; color: #9ca3af; }
+/* [버튼] 메인 버튼 및 홈 버튼 */
+.btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border-radius: 16px; font-weight: bold; border: none; font-size: 1.1rem; }
+.btn-home { background: rgba(255,255,255,0.05); color: #9ca3af; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.85rem; }
+
+/* [카드] */
+.card { background: var(--card); padding: 22px; border-radius: 20px; margin-bottom: 20px; }
 
 /* [메뉴 그리드] */
-.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.menu-item { 
-    background: var(--card); 
-    padding: 30px 10px; 
-    border-radius: 16px; 
-    text-align: center; 
-    cursor: pointer; 
-    border: 1px solid transparent;
-    transition: 0.2s;
-}
-.menu-item:active { background: #2d3748; transform: scale(0.98); }
-.menu-item i { font-size: 2rem; display: block; margin-bottom: 10px; }
-.menu-item span { font-size: 0.95rem; font-weight: bold; }
-.menu-item.disabled { opacity: 0.3; cursor: default; }
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.menu-item { background: var(--card); padding: 35px 10px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+.menu-item i { font-size: 2.2rem; display: block; margin-bottom: 12px; }
 
-/* [기타 카드 및 버튼] */
-.card { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
-input { 
-    padding: 14px 18px; border: 1px solid #4b5563; border-radius: 12px; 
-    width: 100%; margin-bottom: 12px; background: var(--input-bg); 
-    color: white; box-sizing: border-box; font-size: 1rem; outline: none;
+/* [드롭다운] */
+.dropdown-menu {
+    display: none !important;
+    position: absolute;
+    top: 45px;
+    right: 0;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 12px;
+    z-index: 1000;
+    min-width: 150px;
 }
-.btn-main { 
-    width: 100%; padding: 16px; background: var(--primary); color: white; 
-    font-size: 1.1rem; border-radius: 12px; font-weight: bold; border: none;
-}
-.logo-wrapper { display: flex; justify-content: center; padding: 40px 0; }
-.main-logo { width: 100%; max-width: 260px; height: auto; }
+.dropdown-menu.show { display: block !important; }
+.dropdown-menu button { display: block; width: 100%; padding: 14px 16px; text-align: left; background: none; color: white; border-bottom: 1px solid #374151; border: none; }
