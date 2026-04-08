@@ -27,6 +27,9 @@
         .spec-row, .area-row { display: flex; gap: 8px; margin-bottom: 8px; }
         .input-name { flex: 2; } .input-val { flex: 1; text-align: center; }
         .history-item { background: #fff; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+        .history-btns { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-edit { background: #e0f2fe; color: var(--primary); flex: 1; padding: 10px; }
+        .btn-del { background: #fee2e2; color: var(--danger); flex: 1; padding: 10px; }
     </style>
 </head>
 <body>
@@ -71,7 +74,7 @@
             <button class="btn-main" onclick="runT5Calc()">1. 계산하기</button>
         </div>
         <div id="t5-result-area" style="display:none;" class="card"></div>
-        <button class="btn-main" id="t5-save-btn" style="display:none; background:var(--success); margin-bottom:20px;" onclick="saveT5ToCloud()">2. 우리 팀 히스토리에 저장 🌐</button>
+        <button class="btn-main" id="t5-save-btn" style="display:none; background:var(--success); margin-bottom:20px;" onclick="saveT5ToCloud()">2. 저장 (새로 저장 또는 수정)</button>
         <div class="section-title">📋 최근 공유 히스토리</div>
         <div id="t5-history-list"></div>
     </div>
@@ -102,7 +105,6 @@
 </div>
 
 <script>
-    // [준호님 전용 Firebase 설정 완료]
     const firebaseConfig = {
         apiKey: "AIzaSyDjvv8ezS7OJgfwEfEh8Xwou9_bW7jzJ3w",
         authDomain: "kimmoksu-35d62.firebaseapp.com",
@@ -153,9 +155,9 @@
         div.innerHTML = `<input type="text" class="input-name" value="${n}"><input type="number" class="input-val" value="${s}"><button onclick="this.parentElement.remove()" style="color:red; background:none;">X</button>`;
         document.getElementById('spec-list').appendChild(div);
     }
-    function addAreaRow() {
+    function addAreaRow(n='', v='') {
         const div = document.createElement('div'); div.className = 'area-row';
-        div.innerHTML = `<input type="text" class="input-name" placeholder="구간"> <input type="number" class="input-val" placeholder="길이">`;
+        div.innerHTML = `<input type="text" class="input-name" placeholder="구간" value="${n}"> <input type="number" class="input-val" placeholder="길이" value="${v}">`;
         document.getElementById('area-list').appendChild(div);
     }
     function loadT5Specs() {
@@ -185,7 +187,7 @@
                 let c = Math.floor(temp / s.size);
                 if(c > 0) { counts.push(`${s.name}-${c}개`); grandTotal[s.name] = (grandTotal[s.name] || 0) + c; temp -= s.size * c; }
             });
-            html += `• ${a.name}: ${counts.join(', ')} (남음:${temp.toFixed(0)}mm)<br>`;
+            html += `• ${a.name}: ${counts.join(', ') || '없음'} (남음:${temp.toFixed(0)}mm)<br>`;
         });
         lastT5Data = { site, specs, areas, grandTotal, teamId: currentTeam, createdAt: Date.now() };
         document.getElementById('t5-result-area').innerHTML = html + `<br><strong>합계: ${Object.entries(grandTotal).map(([k,v])=>`${k}-${v}개`).join('/')}</strong>`;
@@ -195,16 +197,44 @@
 
     async function saveT5ToCloud() {
         await db.collection("t5_history").add(lastT5Data);
-        alert("저장 완료");
+        alert("저장 완료! (기존 데이터와 별개로 새로 저장되었습니다)");
     }
 
     function listenT5History() {
-        db.collection("t5_history").where("teamId","==",currentTeam).orderBy("createdAt","desc").limit(10).onSnapshot(ss => {
+        db.collection("t5_history").where("teamId","==",currentTeam).orderBy("createdAt","desc").limit(15).onSnapshot(ss => {
             document.getElementById('t5-history-list').innerHTML = ss.docs.map(doc => {
                 const d = doc.data();
-                return `<div class="history-item"><strong>${d.site}</strong><br>${Object.entries(d.grandTotal).map(([k,v])=>`${k}-${v}개`).join(', ')}</div>`;
+                return `<div class="history-item">
+                    <strong>${d.site}</strong><br>${Object.entries(d.grandTotal).map(([k,v])=>`${k}-${v}개`).join(', ')}
+                    <div class="history-btns">
+                        <button class="btn-edit" onclick="loadT5ToEdit('${doc.id}')">불러오기</button>
+                        <button class="btn-del" onclick="deleteHistory('${doc.id}')">삭제</button>
+                    </div>
+                </div>`;
             }).join('') || "저장 내역 없음";
         });
+    }
+
+    async function loadT5ToEdit(id) {
+        const doc = await db.collection("t5_history").doc(id).get();
+        if(!doc.exists) return;
+        const d = doc.data();
+        if(!confirm("이 데이터를 불러와서 수정할까요?")) return;
+        
+        document.getElementById('siteName').value = d.site;
+        // 규격 복원
+        document.getElementById('spec-list').innerHTML = '';
+        d.specs.forEach(s => addSpecRow(s.name, s.size));
+        // 실측 복원
+        document.getElementById('area-list').innerHTML = '';
+        d.areas.forEach(a => addAreaRow(a.name, a.len));
+        
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        alert("데이터를 불러왔습니다. 수정 후 다시 [계산] -> [저장] 하세요.");
+    }
+
+    async function deleteHistory(id) {
+        if(confirm("정말 삭제할까요?")) await db.collection("t5_history").doc(id).delete();
     }
 
     async function saveWorkLog() {
