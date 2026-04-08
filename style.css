@@ -12,8 +12,21 @@
 body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; color: var(--text); -webkit-tap-highlight-color: transparent; }
 .container { max-width: 500px; margin: auto; padding: 15px; box-sizing: border-box; }
 
-/* [공통] 그림자 완전 제거 */
-* { box-shadow: none !important; -webkit-appearance: none; }
+/* [공통] 그림자 제거 (체크박스 제외) */
+button, input[type="text"], input[type="password"], input[type="email"], .card { 
+    box-shadow: none !important; 
+    -webkit-appearance: none; /* 텍스트창과 버튼만 기본 스타일 제거 */
+}
+
+/* [체크박스 복구] 브라우저 기본 체크 표시가 보이도록 설정 */
+input[type="checkbox"] {
+    -webkit-appearance: checkbox !important; /* 체크박스 마크 부활 */
+    appearance: checkbox !important;
+    width: 18px; 
+    height: 18px; 
+    margin: 0; 
+    cursor: pointer;
+}
 
 /* [메인] 상단 바 - 로고 중앙, 메뉴 우측 */
 .top-nav { position: relative; display: flex; justify-content: center; align-items: center; padding: 10px 0; margin-bottom: 20px; }
@@ -25,22 +38,32 @@ body { font-family: -apple-system, system-ui, sans-serif; background-color: var(
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 8px;
+    gap: 10px;
     margin: 5px 0 20px 2px;
     color: #9ca3af;
     font-size: 0.9rem;
     cursor: pointer;
 }
-.remember-wrapper input { width: 18px; height: 18px; margin: 0; border: 1px solid #4b5563; }
 
 /* [버튼 디자인] */
 .btn-main { width: 100%; padding: 16px; background: var(--primary); color: white; border-radius: 12px; font-weight: bold; border: none; font-size: 1.1rem; }
 .btn-home { background: rgba(255,255,255,0.05); color: #9ca3af; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.8rem; }
 .btn-circle { background: #4b5563; color: white; width: 30px; height: 30px; border-radius: 50%; border: none; font-size: 1.2rem; line-height: 1; }
 
-/* [입력창 간격] 제목과 입력창 사이는 띄우고, 입력창끼리는 쫀쫀하게 */
+/* [입력창 간격] */
 .section-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-input { padding: 14px 18px; border: 1px solid #4b5563; border-radius: 12px; width: 100%; margin-bottom: 12px; background: var(--input-bg); color: white; box-sizing: border-box; font-size: 1rem; outline: none; }
+input[type="text"], input[type="password"], input[type="email"] { 
+    padding: 14px 18px; 
+    border: 1px solid #4b5563; 
+    border-radius: 12px; 
+    width: 100%; 
+    margin-bottom: 12px; 
+    background: var(--input-bg); 
+    color: white; 
+    box-sizing: border-box; 
+    font-size: 1rem; 
+    outline: none; 
+}
 
 .card { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
 .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
