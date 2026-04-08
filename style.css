@@ -1,21 +1,81 @@
-:root { --primary: #2563eb; --secondary: #64748b; --success: #10b981; --danger: #ef4444; --bg: #f1f5f9; --card: #ffffff; }
-body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: #1e293b; }
+:root { 
+    --primary: #3b82f6; 
+    --secondary: #4b5563; 
+    --success: #10b981; 
+    --danger: #ef4444; 
+    --bg: #111827; /* 네이비가 살짝 섞인 짙은 그레이 */
+    --card: #1f2937; /* 카드 배경 */
+    --text: #f3f4f6; /* 밝은 글자색 */
+    --input-bg: #374151; /* 입력창 배경 */
+}
+
+body { 
+    font-family: -apple-system, system-ui, sans-serif; 
+    background-color: var(--bg); 
+    margin: 0; 
+    padding: 0; 
+    color: var(--text); 
+}
+
 .container { max-width: 500px; margin: auto; padding: 15px; box-sizing: border-box; }
-.card { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; }
-.section-title { font-weight: bold; font-size: 1rem; margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--bg); padding-bottom: 8px; align-items: center; }
-input, select, textarea { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; width: 100%; margin-bottom: 8px; }
-button { border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-.btn-main { width: 100%; padding: 16px; background: var(--primary); color: white; font-size: 1.1rem; }
-.btn-home { background: #eee; padding: 8px 12px; font-size: 0.8rem; margin-bottom: 10px; }
-.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-.menu-item { background: white; padding: 30px 15px; border-radius: 16px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; position: relative; overflow: hidden; }
-.menu-item i { font-size: 2rem; display: block; margin-bottom: 10px; }
+
+/* 로고 레이아웃 */
+.logo-wrapper { display: flex; justify-content: center; align-items: center; padding: 40px 0; }
+.main-logo { width: 100%; max-width: 260px; height: auto; object-fit: contain; }
+
+.card { 
+    background: var(--card); 
+    padding: 20px; 
+    border-radius: 16px; 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4); 
+    margin-bottom: 20px; 
+}
+
+.section-title { 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    margin-bottom: 15px; 
+    display: flex; 
+    justify-content: space-between; 
+    border-bottom: 1px solid #374151; 
+    padding-bottom: 10px; 
+}
+
+/* 입력창 스타일 */
+input, select, textarea { 
+    padding: 14px; 
+    border: 1px solid #4b5563; 
+    border-radius: 10px; 
+    font-size: 1rem; 
+    box-sizing: border-box; 
+    width: 100%; 
+    margin-bottom: 10px; 
+    background-color: var(--input-bg); 
+    color: white; 
+}
+
+button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+.btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; font-size: 1.1rem; }
+.btn-home { background: #374151; color: white; padding: 8px 15px; font-size: 0.85rem; margin-bottom: 15px; }
+
+/* 메뉴판 디자인 */
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.menu-item { 
+    background: var(--card); 
+    padding: 35px 15px; 
+    border-radius: 20px; 
+    text-align: center; 
+    cursor: pointer; 
+    border: 1px solid #374151;
+    transition: transform 0.1s;
+}
+.menu-item:active { transform: scale(0.95); } /* 눌렀을 때 반응 */
+.menu-item i { font-size: 2.2rem; display: block; margin-bottom: 12px; }
 .menu-item span { font-weight: bold; font-size: 1rem; }
-.menu-item.disabled { opacity: 0.5; background: #f8fafc; }
-.menu-item.disabled::after { content: "준비중"; position: absolute; top: 10px; right: -20px; background: var(--secondary); color: white; font-size: 0.6rem; padding: 2px 20px; transform: rotate(45deg); }
-.spec-row, .area-row { display: flex; gap: 8px; margin-bottom: 8px; }
-.input-name { flex: 2; } .input-val { flex: 1; text-align: center; }
-.history-item { background: #fff; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
-.history-btns { display: flex; gap: 8px; margin-top: 10px; }
-.btn-edit { background: #e0f2fe; color: var(--primary); flex: 1; padding: 10px; }
-.btn-del { background: #fee2e2; color: var(--danger); flex: 1; padding: 10px; }
+.menu-item.disabled { opacity: 0.3; }
+
+/* 히스토리 스타일 */
+.history-item { background: #374151; padding: 15px; border-radius: 12px; margin-bottom: 10px; }
+.history-btns { display: flex; gap: 10px; margin-top: 12px; }
+.btn-edit { background: #2563eb; color: white; flex: 1; padding: 10px; }
+.btn-del { background: #991b1b; color: white; flex: 1; padding: 10px; }
