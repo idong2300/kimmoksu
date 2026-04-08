@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>내 정보 수정 - 김목수이야기</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <button class="btn-home" onclick="location.href='index.html'">⬅ 홈으로</button>
+    <h3>⚙️ 내 정보 수정</h3>
+
+    <div class="card">
+        <div class="section-title">닉네임 변경</div>
+        <p style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 10px;">현장에서 표시될 이름을 설정하세요.</p>
+        <input type="text" id="newNick" placeholder="새 닉네임 입력">
+        <button class="btn-main" onclick="updateNickname()" style="background: var(--primary);">닉네임 저장하기</button>
+    </div>
+
+    <div class="card">
+        <div class="section-title">비밀번호 변경</div>
+        <p style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 10px;">보안을 위해 6자리 이상 입력하세요.</p>
+        <input type="password" id="newPw" placeholder="새 비밀번호 입력">
+        <input type="password" id="confirmPw" placeholder="비밀번호 확인">
+        <button class="btn-main" onclick="updatePassword()" style="background: var(--danger);">비밀번호 변경하기</button>
+    </div>
+</div>
+
+<script>
+    let userEmail = "";
+
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            userEmail = user.email;
+            // 현재 닉네임 미리 불러와서 넣어두기
+            const userDoc = await db.collection("users").doc(userEmail).get();
+            if (userDoc.exists) {
+                document.getElementById('newNick').value = userDoc.data().nickname;
+            }
+        } else {
+            location.href = 'index.html';
+        }
+    });
+
+    // 닉네임 업데이트 함수
+    async function updateNickname() {
+        const nick = document.getElementById('newNick').value.trim();
+        if (!nick) return alert("닉네임을 입력해주세요.");
+
+        try {
+            await db.collection("users").doc(userEmail).update({
+                nickname: nick
+            });
+            alert("닉네임이 변경되었습니다!");
+            location.href = 'index.html';
+        } catch (e) {
+            alert("변경 실패: " + e.message);
+        }
+    }
+
+    // 비밀번호 업데이트 함수
+    async function updatePassword() {
+        const pw = document.getElementById('newPw').value;
+        const confirm = document.getElementById('confirmPw').value;
+
+        if (pw.length < 6) return alert("비밀번호는 6자리 이상이어야 합니다.");
+        if (pw !== confirm) return alert("비밀번호가 일치하지 않습니다.");
+
+        try {
+            const user = auth.currentUser;
+            await user.updatePassword(pw);
+            alert("비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요.");
+            await auth.signOut();
+            location.href = 'index.html';
+        } catch (e) {
+            // 최근에 로그인하지 않았을 경우 보안상 에러가 날 수 있음
+            if (e.code === 'auth/requires-recent-login') {
+                alert("보안을 위해 다시 로그인한 직후에만 비번 변경이 가능합니다. 로그아웃 후 다시 로그인해주세요.");
+            } else {
+                alert("실패: " + e.message);
+            }
+        }
+    }
+</script>
+</body>
+</html>
