@@ -8,6 +8,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 접기 버튼을 위한 추가 스타일 */
+        .btn-toggle { background: var(--secondary); color: white; width: 24px; height: 24px; border-radius: 50%; padding: 0; font-size: 1rem; line-height: 24px; border: none; cursor: pointer; }
+        #spec-section { display: none; margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -15,9 +20,14 @@
     <h3>💡 T5 발주 계산기</h3>
     
     <div class="card">
-        <div class="section-title">제품 규격 설정</div>
-        <div id="spec-list"></div>
-        <button onclick="addSpecRow()" style="width:100%; padding:5px; background:#eee; font-size:0.8rem;">+ 규격 추가</button>
+        <div class="section-title">
+            제품 규격 설정 
+            <button id="specToggleBtn" class="btn-toggle" onclick="toggleSpecSection()">+</button>
+        </div>
+        <div id="spec-section">
+            <div id="spec-list"></div>
+            <button onclick="addSpecRow()" style="width:100%; padding:5px; background:#eee; font-size:0.8rem;">+ 규격 추가</button>
+        </div>
     </div>
 
     <div class="card">
@@ -39,17 +49,27 @@
     let editingT5Id = null;
     let lastT5Data = null;
 
-    // T5 로직 (어제 만든 것과 동일)
+    // [추가] 제품 규격 섹션 접기/펴기 함수
+    function toggleSpecSection() {
+        const sec = document.getElementById('spec-section');
+        const btn = document.getElementById('specToggleBtn');
+        const isOpen = sec.style.display === 'block';
+        sec.style.display = isOpen ? 'none' : 'block';
+        btn.innerText = isOpen ? '+' : '-';
+    }
+
     function addSpecRow(n='', s='') {
         const div = document.createElement('div'); div.className = 'spec-row';
         div.innerHTML = `<input type="text" class="input-name" value="${n}"><input type="number" class="input-val" value="${s}"><button onclick="this.parentElement.remove()" style="color:red; background:none; border:none;">X</button>`;
         document.getElementById('spec-list').appendChild(div);
     }
+
     function addAreaRow(n='', v='') {
         const div = document.createElement('div'); div.className = 'area-row';
         div.innerHTML = `<input type="text" class="input-name" placeholder="구간" value="${n}"> <input type="number" class="input-val" placeholder="길이" value="${v}">`;
         document.getElementById('area-list').appendChild(div);
     }
+
     function loadDefaultSpecs() {
         const d = [{"n":"1200","s":1190},{"n":"900","s":890},{"n":"600","s":590},{"n":"400","s":385},{"n":"300","s":330}];
         document.getElementById('spec-list').innerHTML = '';
@@ -120,6 +140,9 @@
         d.specs.forEach(s => addSpecRow(s.name, s.size));
         document.getElementById('area-list').innerHTML = '';
         d.areas.forEach(a => addAreaRow(a.name, a.len));
+        // 수정 시에는 규격 칸을 자동으로 열어줌
+        document.getElementById('spec-section').style.display = 'block';
+        document.getElementById('specToggleBtn').innerText = '-';
         window.scrollTo(0,0);
     }
 
