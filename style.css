@@ -9,77 +9,57 @@
     --input-bg: #374151; 
 }
 
-body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
-.container { max-width: 500px; margin: auto; padding: 20px; box-sizing: border-box; }
+body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; color: var(--text); -webkit-tap-highlight-color: transparent; }
+.container { max-width: 500px; margin: auto; padding: 15px; box-sizing: border-box; }
 
-/* [공통] 모든 버튼 및 입력창 그림자 강제 제거 */
-button, input, .card { box-shadow: none !important; -webkit-appearance: none; }
+/* [공통] 그림자 완전 제거 */
+* { box-shadow: none !important; -webkit-appearance: none; }
 
-/* [메인] 상단 바 및 로고 중앙 정렬 */
-.top-nav { position: relative; padding: 20px 0; display: flex; justify-content: center; align-items: center; }
-.nav-logo { width: 100%; max-width: 240px; height: auto; object-fit: contain; }
+/* [메인] 상단 바 - 로고 중앙, 메뉴 우측 */
+.top-nav { position: relative; display: flex; justify-content: center; align-items: center; padding: 10px 0; margin-bottom: 20px; }
+.nav-logo { height: 35px; width: auto; object-fit: contain; cursor: pointer; }
 .more-btn-wrapper { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
 
-/* [로그인] 자동로그인 체크박스 좌측 정렬 */
+/* [로그인] 자동로그인 왼쪽 정렬 */
 .remember-wrapper {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* 왼쪽 끝으로 */
+    justify-content: flex-start;
     gap: 8px;
     margin: 5px 0 20px 2px;
     color: #9ca3af;
     font-size: 0.9rem;
     cursor: pointer;
 }
-.remember-wrapper input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+.remember-wrapper input { width: 18px; height: 18px; margin: 0; border: 1px solid #4b5563; }
 
-/* [T5] 섹션 제목과 입력란 사이 간격 확보 */
-.section-title { 
-    font-weight: bold; 
-    font-size: 1.1rem; 
-    margin-bottom: 20px; /* 여기서 간격을 줘서 입력란과 띄웁니다 */
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-}
+/* [버튼 디자인] */
+.btn-main { width: 100%; padding: 16px; background: var(--primary); color: white; border-radius: 12px; font-weight: bold; border: none; font-size: 1.1rem; }
+.btn-home { background: rgba(255,255,255,0.05); color: #9ca3af; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.8rem; }
+.btn-circle { background: #4b5563; color: white; width: 30px; height: 30px; border-radius: 50%; border: none; font-size: 1.2rem; line-height: 1; }
 
-/* [입력란] 세련된 라운딩 및 간격 */
-input { 
-    padding: 15px 18px; 
-    border: 1px solid #4b5563; 
-    border-radius: 12px; 
-    width: 100%; 
-    margin-bottom: 12px; 
-    background: var(--input-bg); 
-    color: white; 
-    box-sizing: border-box; 
-    font-size: 1rem;
-    outline: none;
-}
+/* [입력창 간격] 제목과 입력창 사이는 띄우고, 입력창끼리는 쫀쫀하게 */
+.section-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+input { padding: 14px 18px; border: 1px solid #4b5563; border-radius: 12px; width: 100%; margin-bottom: 12px; background: var(--input-bg); color: white; box-sizing: border-box; font-size: 1rem; outline: none; }
 
-/* [버튼] 메인 버튼 및 홈 버튼 */
-.btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border-radius: 16px; font-weight: bold; border: none; font-size: 1.1rem; }
-.btn-home { background: rgba(255,255,255,0.05); color: #9ca3af; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.85rem; }
-
-/* [카드] */
-.card { background: var(--card); padding: 22px; border-radius: 20px; margin-bottom: 20px; }
-
-/* [메뉴 그리드] */
-.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.menu-item { background: var(--card); padding: 35px 10px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-.menu-item i { font-size: 2.2rem; display: block; margin-bottom: 12px; }
+.card { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.menu-item { background: var(--card); padding: 30px 10px; border-radius: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+.menu-item i { font-size: 2rem; display: block; margin-bottom: 10px; }
 
 /* [드롭다운] */
 .dropdown-menu {
     display: none !important;
     position: absolute;
-    top: 45px;
+    top: 40px;
     right: 0;
     background-color: #1f2937;
     border: 1px solid #374151;
     border-radius: 12px;
     z-index: 1000;
-    min-width: 150px;
+    min-width: 140px;
+    overflow: hidden;
 }
 .dropdown-menu.show { display: block !important; }
-.dropdown-menu button { display: block; width: 100%; padding: 14px 16px; text-align: left; background: none; color: white; border-bottom: 1px solid #374151; border: none; }
+.dropdown-menu button { display: block; width: 100%; padding: 12px 16px; text-align: left; background: none; color: white; border: none; border-bottom: 1px solid #374151; font-size: 0.9rem; }
+.dropdown-menu button:last-child { border-bottom: none; }
