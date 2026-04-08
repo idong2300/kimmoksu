@@ -12,32 +12,37 @@
 </head>
 <body>
 <div class="container">
-    <button class="btn-home" onclick="location.href='index.html'">⬅ 홈으로</button>
-    <h3 style="margin-bottom:20px;">👥 팀원 관리</h3>
+    <div class="btn-home" onclick="location.href='index.html'">🏠 메인으로</div>
+    <h3>👥 팀원 관리</h3>
 
     <div id="create-team-area" class="card" style="display:none;">
-        <div class="section-title">우리 팀 생성</div>
-        <input type="text" id="newTeamName" placeholder="팀 이름 (예: 김목수이야기 1팀)">
-        <button class="btn-main" onclick="createNewTeam()">팀 만들기</button>
+        <div class="section-title">새 팀 만들기</div>
+        <input type="text" id="newTeamName" placeholder="팀 이름을 지어주세요">
+        <button class="btn-main" onclick="createNewTeam()">팀 생성하기</button>
     </div>
 
     <div id="manage-team-area" class="card" style="display:none;">
-        <div class="section-title">팀: <span id="currentTeamName"></span></div>
-        <div style="display:flex; gap:8px; margin-bottom:20px;">
-            <input type="email" id="inviteEmail" placeholder="초대할 팀원 이메일" style="margin-bottom:0;">
-            <button onclick="inviteMember()" style="padding:0 15px; background:var(--primary); color:white; border-radius:12px;">초대</button>
+        <div class="section-title" style="margin-bottom:10px;">
+            우리 팀: <span id="currentTeamName" style="color:var(--primary);"></span>
+            <button id="editTeamNameBtn" style="font-size:0.7rem; background:#4b5563; color:white; padding:4px 10px; border-radius:8px; border:none; display:none;" onclick="toggleEditTeamName()">수정</button>
         </div>
-        <div id="member-list-area">닉네임을 불러오는 중...</div>
+        
+        <div id="edit-name-box" style="display:none; gap:8px; margin-bottom:20px;">
+            <input type="text" id="editTeamNameInput" style="margin-bottom:0; flex:1;">
+            <button onclick="updateTeamName()" style="background:var(--success); color:white; padding:0 15px; border-radius:12px; border:none;">저장</button>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:25px; margin-top:20px;">
+            <input type="email" id="inviteEmail" placeholder="팀원 이메일" style="margin-bottom:0;">
+            <button onclick="inviteMember()" style="padding:0 15px; background:var(--primary); color:white; border-radius:12px; border:none;">초대</button>
+        </div>
+        <div id="member-list-area"></div>
     </div>
 </div>
 
 <script>
     let myEmail, myTeamId;
-
-    auth.onAuthStateChanged(user => { 
-        if (user) { myEmail = user.email; checkMyTeam(); } 
-        else { location.href='index.html'; } 
-    });
+    auth.onAuthStateChanged(user => { if (user) { myEmail = user.email; checkMyTeam(); } else { location.href='index.html'; } });
 
     async function checkMyTeam() {
         const q = await db.collection("teams").where("members", "array-contains", myEmail).get();
@@ -49,31 +54,46 @@
         myTeamId = doc.id;
         const d = doc.data();
         const isLeader = (d.leader === myEmail);
+        
         document.getElementById('manage-team-area').style.display='block';
         document.getElementById('currentTeamName').innerText = d.teamName;
+        document.getElementById('editTeamNameInput').value = d.teamName;
         
-        let html = `<strong style="display:block; margin-bottom:15px;">멤버 목록 (${d.members.length}명)</strong>`;
+        // 팀장만 수정 가능하도록 버튼 노출
+        if(isLeader) document.getElementById('editTeamNameBtn').style.display = 'inline-block';
+        
+        let html = `<strong style="display:block; margin-bottom:15px;">멤버 명단 (${d.members.length}명)</strong>`;
         for(const email of d.members) {
-            // 각 멤버의 닉네임을 DB에서 가져오기
             const uDoc = await db.collection("users").doc(email).get();
             const nickname = uDoc.exists ? uDoc.data().nickname : email.split('@')[0];
             const isTargetLeader = (email === d.leader);
 
-            html += `<div style="display:flex; justify-content:space-between; align-items:center; background:#2d3748; padding:12px; border-radius:12px; margin-bottom:10px;">
-                <div style="display:flex; flex-direction:column;">
-                    <span style="font-weight:bold;">${nickname} ${isTargetLeader ? '👑' : ''}</span>
-                    <small style="color:#9ca3af; font-size:0.75rem;">${email}</small>
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; background:#2d3748; padding:15px; border-radius:15px; margin-bottom:12px;">
+                <div>
+                    <span style="font-weight:bold;">${nickname} ${isTargetLeader ? '👑' : ''}</span><br>
+                    <small style="color:#9ca3af; font-size:0.7rem;">${email}</small>
                 </div>
-                <div style="display:flex; gap:5px;">
-                    ${isLeader && email !== myEmail ? `
-                        <button onclick="delegateLeader('${email}')" style="color:var(--primary); border:1px solid var(--primary); font-size:0.75rem; padding:4px 8px; border-radius:6px; background:none;">위임</button>
-                        <button onclick="removeMember('${email}')" style="color:var(--danger); border:1px solid var(--danger); font-size:0.75rem; padding:4px 8px; border-radius:6px; background:none;">제외</button>
-                    ` : ''}
-                    ${!isLeader && email === myEmail ? `<button onclick="leaveTeam()" style="color:#9ca3af; background:none; font-size:0.75rem;">나가기</button>` : ''}
-                </div>
+                ${isLeader && email !== myEmail ? `
+                    <button onclick="delegateLeader('${email}')" style="color:var(--primary); border:1px solid var(--primary); font-size:0.75rem; padding:5px 10px; border-radius:8px; background:none;">위임</button>
+                ` : ''}
             </div>`;
         }
         document.getElementById('member-list-area').innerHTML = html;
+    }
+
+    function toggleEditTeamName() {
+        const box = document.getElementById('edit-name-box');
+        box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function updateTeamName() {
+        const newName = document.getElementById('editTeamNameInput').value.trim();
+        if(!newName) return;
+        try {
+            await db.collection("teams").doc(myTeamId).update({ teamName: newName });
+            alert("팀 이름이 변경되었습니다!");
+            location.reload();
+        } catch(e) { alert(e.message); }
     }
 
     async function createNewTeam() {
@@ -87,20 +107,12 @@
         const email = document.getElementById('inviteEmail').value.trim();
         if(!email) return;
         await db.collection("teams").doc(myTeamId).update({ members: firebase.firestore.FieldValue.arrayUnion(email) });
-        alert(email + "님을 팀에 추가했습니다.");
         location.reload();
     }
 
     async function delegateLeader(newLeader) {
-        if(confirm(newLeader + "님에게 팀장 권한을 넘기시겠습니까?")) {
+        if(confirm("팀장 자리를 넘기시겠습니까?")) {
             await db.collection("teams").doc(myTeamId).update({ leader: newLeader });
-            location.reload();
-        }
-    }
-
-    async function removeMember(email) {
-        if(confirm(email + "님을 팀에서 제외할까요?")) {
-            await db.collection("teams").doc(myTeamId).update({ members: firebase.firestore.FieldValue.arrayRemove(email) });
             location.reload();
         }
     }
