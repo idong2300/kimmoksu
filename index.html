@@ -13,28 +13,26 @@
 <body>
 <div class="container">
     <div id="auth-box" style="display:none;">
-        <div class="logo-wrapper" style="display:flex; justify-content:center; padding:40px 0;"><img src="kimmoksu_main_logo.png" style="width:100%; max-width:260px;"></div>
+        <div style="display:flex; justify-content:center; padding:40px 0;"><img src="kimmoksu_main_logo.png" style="width:100%; max-width:260px;"></div>
         <div class="card">
-            <h2 id="auth-title" style="text-align: center; margin-bottom: 25px;">로그인</h2>
+            <h2 id="auth-title" style="text-align: center; margin-bottom: 20px;">로그인</h2>
             <input type="text" id="userNick" placeholder="사용할 닉네임" style="display:none;">
             <input type="email" id="userEmail" placeholder="이메일 주소">
             <input type="password" id="userPw" placeholder="비밀번호">
-            
             <label class="remember-wrapper">
                 <input type="checkbox" id="rememberMe" checked>
                 <span>자동 로그인 유지</span>
             </label>
-
             <button class="btn-main" onclick="handleAuth()">접속하기</button>
-            <p style="text-align:center; margin-top:25px; color:#9ca3af; cursor:pointer;" onclick="toggleAuthMode()">아이디가 없나요? <b id="toggle-link">회원가입</b></p>
+            <p style="text-align:center; margin-top:20px; color:#9ca3af; cursor:pointer;" onclick="toggleAuthMode()">아이디가 없나요? <b id="toggle-link">회원가입</b></p>
         </div>
     </div>
 
     <div id="dashboard-box" style="display:none;">
         <div class="top-nav">
-            <img src="kimmoksu_main_logo.png" alt="로고" class="nav-logo">
+            <img src="kimmoksu_main_logo.png" alt="로고" class="nav-logo" onclick="location.reload()">
             <div class="more-btn-wrapper">
-                <button class="more-btn" style="background:none; border:none; color:white; font-size:1.8rem;" onclick="toggleDropdown(event)">⋮</button>
+                <button style="background:none; border:none; color:white; font-size:1.8rem;" onclick="toggleDropdown(event)">⋮</button>
                 <div id="myDropdown" class="dropdown-menu">
                     <button onclick="location.href='profile.html'">⚙️ 내 정보 수정</button>
                     <button onclick="location.href='team.html'">👤 팀원 관리</button>
@@ -42,12 +40,10 @@
                 </div>
             </div>
         </div>
-        
-        <div style="margin-bottom: 35px; text-align: center;">
-            <h3 id="displayUserName" style="margin:0; color:var(--primary); font-size: 1.4rem;"></h3>
-            <p style="font-size:0.9rem; color:#9ca3af; margin-top:8px;">현장 관리를 시작합니다.</p>
+        <div style="margin-bottom: 30px; text-align: center;">
+            <h3 id="displayUserName" style="margin:0; color:var(--primary);"></h3>
+            <p style="font-size:0.85rem; color:#9ca3af; margin-top:5px;">현장 관리를 시작합니다.</p>
         </div>
-
         <div class="menu-grid">
             <div class="menu-item" onclick="location.href='t5.html'"><i>💡</i><span>T5 계산기</span></div>
             <div class="menu-item disabled" onclick="alert('준비중')"><i>📝</i><span>작업일보</span></div>
@@ -56,46 +52,25 @@
         </div>
     </div>
 </div>
-
 <script>
     let isLoginMode = true;
-    auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged(async user => {
         if (user) { 
             const userDoc = await db.collection("users").doc(user.email).get();
             const nick = userDoc.exists ? userDoc.data().nickname : user.email.split('@')[0];
             showDashboard(nick);
-        } else { 
-            document.getElementById('auth-box').style.display='block'; 
-            document.getElementById('dashboard-box').style.display='none'; 
-        }
+        } else { document.getElementById('auth-box').style.display='block'; document.getElementById('dashboard-box').style.display='none'; }
     });
-
-    function toggleDropdown(event) { event.stopPropagation(); document.getElementById("myDropdown").classList.toggle("show"); }
-    window.onclick = function() { const d = document.getElementById("myDropdown"); if (d && d.classList.contains('show')) d.classList.remove('show'); }
-    function toggleAuthMode() {
-        isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "로그인" : "회원가입";
-        document.getElementById('userNick').style.display = isLoginMode ? "none" : "block";
-    }
+    function toggleDropdown(e) { e.stopPropagation(); document.getElementById("myDropdown").classList.toggle("show"); }
+    window.onclick = () => { const d = document.getElementById("myDropdown"); if(d && d.classList.contains('show')) d.classList.remove('show'); }
+    function toggleAuthMode() { isLoginMode = !isLoginMode; document.getElementById('auth-title').innerText = isLoginMode ? "로그인" : "회원가입"; document.getElementById('userNick').style.display = isLoginMode ? "none" : "block"; }
     async function handleAuth() {
-        const email = document.getElementById('userEmail').value.trim();
-        const pw = document.getElementById('userPw').value.trim();
-        const nick = document.getElementById('userNick').value.trim();
+        const email = document.getElementById('userEmail').value.trim(), pw = document.getElementById('userPw').value.trim(), nick = document.getElementById('userNick').value.trim();
         if(!email || !pw) return alert("입력해주세요.");
-        try {
-            if(isLoginMode) { await auth.signInWithEmailAndPassword(email, pw); }
-            else { 
-                await auth.createUserWithEmailAndPassword(email, pw);
-                await db.collection("users").doc(email).set({ nickname: nick, email: email });
-            }
-        } catch(e) { alert(e.message); }
+        try { if(isLoginMode) { await auth.signInWithEmailAndPassword(email, pw); } else { await auth.createUserWithEmailAndPassword(email, pw); await db.collection("users").doc(email).set({ nickname: nick, email: email }); } } catch(e) { alert(e.message); }
     }
-    function showDashboard(name) { 
-        document.getElementById('auth-box').style.display='none'; 
-        document.getElementById('dashboard-box').style.display='block'; 
-        document.getElementById('displayUserName').innerText = `${name}님 반갑습니다!`;
-    }
-    async function handleLogout() { if(confirm("로그아웃 할까요?")) { await auth.signOut(); location.reload(); } }
+    function showDashboard(n) { document.getElementById('auth-box').style.display='none'; document.getElementById('dashboard-box').style.display='block'; document.getElementById('displayUserName').innerText = `${n}님 반갑습니다!`; }
+    async function handleLogout() { if(confirm("로그아웃?")) { await auth.signOut(); location.reload(); } }
 </script>
 </body>
 </html>
