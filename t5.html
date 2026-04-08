@@ -1,174 +1,40 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>T5 계산기 - 김목수이야기</title>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
-    <script src="firebase-config.js"></script>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div class="container">
-    <button class="btn-home" onclick="location.href='index.html'">⬅ 홈으로</button>
-    <h3>💡 T5 발주 계산기</h3>
-    
-    <div class="card">
-        <div class="section-title">제품 규격 설정 <button id="specToggleBtn" onclick="toggleSpecSection()" style="background:#4b5563; color:white; width:28px; height:28px; border-radius:50%; font-size:1.2rem;">+</button></div>
-        <div id="spec-section" style="display:none;">
-            <div id="spec-list"></div>
-            <button onclick="addSpecRow()" style="width:100%; padding:8px; background:#4b5563; color:white; font-size:0.8rem; border-radius:8px;">+ 규격 추가</button>
-        </div>
-    </div>
+// t5.html의 <script> 부분 중 변경된 핵심 로직
+let currentNickname = "";
 
-    <div class="card">
-        <div class="section-title">실측 길이 입력 (mm) <button onclick="addAreaRow()" style="font-size:0.8rem; background:var(--secondary); color:white; padding:5px 12px; border-radius:8px;">+ 추가</button></div>
-        <input type="text" id="siteName" placeholder="현장/부위 명칭 (예: 거실 천장)">
-        <div id="area-list"></div>
-        <button class="btn-main" onclick="runT5Calc()">1. 계산하기</button>
-    </div>
+auth.onAuthStateChanged(async (user) => {
+    if (user) { 
+        currentUserEmail = user.email; 
+        // 내 닉네임 가져오기
+        const userDoc = await db.collection("users").doc(user.email).get();
+        currentNickname = userDoc.exists ? userDoc.data().nickname : user.email.split('@')[0];
+        await findMyTeam(); 
+    } else { location.href = 'index.html'; }
+});
 
-    <div id="t5-result-area" style="display:none;" class="card"></div>
-    <button class="btn-main" id="t5-save-btn" style="display:none; background:var(--success); margin-bottom:20px;" onclick="saveT5ToCloud()">2. 저장하기</button>
-    
-    <div class="section-title">📋 나의 계산 히스토리</div>
-    <div id="t5-history-list">불러오는 중...</div>
-</div>
+function runT5Calc() {
+    // ... 기존 계산 로직 ...
+    lastT5Data = { 
+        site, specs, areas, grandTotal, 
+        userEmail: currentUserEmail, 
+        userName: currentNickname, // 👈 이메일 대신 닉네임 저장!
+        teamId: myTeamId,
+        createdAt: Date.now() 
+    };
+    // ... 결과 표시 로직 ...
+}
 
-<script>
-    let currentUserEmail = null;
-    let editingT5Id = null;
-    let lastT5Data = null;
-
-    auth.onAuthStateChanged((user) => {
-        if (user) { 
-            currentUserEmail = user.email; 
-            setTimeout(() => listenT5History(), 500);
-        } else { 
-            alert("로그인이 필요합니다."); location.href = 'index.html'; 
-        }
-    });
-
-    function toggleSpecSection() {
-        const sec = document.getElementById('spec-section');
-        const btn = document.getElementById('specToggleBtn');
-        const isOpen = sec.style.display === 'block';
-        sec.style.display = isOpen ? 'none' : 'block';
-        btn.innerText = isOpen ? '+' : '-';
-    }
-
-    function addSpecRow(n='', s='') {
-        const div = document.createElement('div');
-        div.style.display = "flex"; div.style.gap = "8px"; div.style.marginBottom = "8px";
-        div.innerHTML = `<input type="text" style="flex:2; margin:0;" value="${n}"> <input type="number" style="flex:1; margin:0;" value="${s}"> <button onclick="this.parentElement.remove()" style="color:var(--danger); background:none; font-size:1.2rem; padding:0 5px;">×</button>`;
-        document.getElementById('spec-list').appendChild(div);
-    }
-
-    function addAreaRow(n='', v='') {
-        const div = document.createElement('div');
-        div.className = 'area-row'; 
-        div.innerHTML = `<input type="text" placeholder="구간" value="${n}"><input type="number" placeholder="길이" value="${v}">`;
-        document.getElementById('area-list').appendChild(div);
-    }
-
-    function loadDefaultSpecs() {
-        const d = [{"n":"1200","s":1190},{"n":"900","s":890},{"n":"600","s":590},{"n":"400","s":385},{"n":"300","s":330}];
-        document.getElementById('spec-list').innerHTML = '';
-        d.forEach(x => addSpecRow(x.n, x.s));
-    }
-
-    function runT5Calc() {
-        const site = document.getElementById('siteName').value || "현장";
-        const specRows = document.querySelectorAll('#spec-list > div');
-        const specs = Array.from(specRows).map(r => ({
-            name: r.querySelectorAll('input')[0].value,
-            size: parseFloat(r.querySelectorAll('input')[1].value)
-        })).filter(x => x.size > 0).sort((a,b) => b.size - a.size);
-
-        const areaRows = document.querySelectorAll('#area-list .area-row');
-        const areas = Array.from(areaRows).map(r => ({
-            name: r.querySelectorAll('input')[0].value || "구간",
-            len: parseFloat(r.querySelectorAll('input')[1].value)
-        })).filter(x => x.len > 0);
-
-        if(areas.length === 0) return alert("실측 길이를 넣으세요.");
-        let grandTotal = {}, html = `<strong>📍 ${site}</strong><hr style="border:0; border-top:1px solid #4b5563; margin:10px 0;">`;
-        areas.forEach(a => {
-            let temp = a.len - 50, counts = [];
-            specs.forEach(s => {
-                let c = Math.floor(temp / s.size);
-                if(c > 0) { counts.push(`${s.name}-${c}개`); grandTotal[s.name] = (grandTotal[s.name] || 0) + c; temp -= s.size * c; }
-            });
-            html += `<div style="margin-bottom:5px;">• ${a.name}: ${counts.join(', ') || '없음'} <span style="color:#9ca3af; font-size:0.8rem;">(남음:${temp.toFixed(0)}mm)</span></div>`;
-        });
-        lastT5Data = { site, specs, areas, grandTotal, userEmail: currentUserEmail, createdAt: Date.now() };
-        document.getElementById('t5-result-area').innerHTML = html + `<div style="margin-top:15px; padding-top:10px; border-top:2px solid var(--primary);"><strong>합계: ${Object.entries(grandTotal).map(([k,v])=>`${k}-${v}개`).join(' / ')}</strong></div>`;
-        document.getElementById('t5-result-area').style.display = 'block';
-        document.getElementById('t5-save-btn').style.display = 'block';
-        document.getElementById('t5-save-btn').innerText = editingT5Id ? "2. 수정 내용 덮어쓰기 💾" : "2. 히스토리에 저장 🌐";
-    }
-
-    async function saveT5ToCloud() {
-        if(!currentUserEmail) return;
-        try {
-            if(editingT5Id) { 
-                await db.collection("t5_history").doc(editingT5Id).update(lastT5Data); 
-                alert("수정 완료"); 
-            } else { 
-                await db.collection("t5_history").add(lastT5Data); 
-                alert("저장 완료"); 
-            }
-            location.reload();
-        } catch(e) { alert("저장 실패: " + e.message); }
-    }
-
-    function listenT5History() {
-        if(!currentUserEmail) return;
-        db.collection("t5_history")
-          .where("userEmail","==",currentUserEmail)
-          .orderBy("createdAt","desc")
-          .limit(15)
-          .onSnapshot(ss => {
-            document.getElementById('t5-history-list').innerHTML = ss.docs.map(doc => {
-                const d = doc.data();
-                return `<div class="history-item">
-                    <div style="font-weight:bold; font-size:1rem; margin-bottom:8px;">${d.site}</div>
-                    <div style="font-size:0.9rem; color:#d1d5db;">${Object.entries(d.grandTotal).map(([k,v])=>`${k}-${v}개`).join(', ')}</div>
-                    <div class="history-btns">
-                        <button class="btn-edit" onclick="loadT5ToEdit('${doc.id}')">수정</button>
-                        <button class="btn-del" onclick="deleteT5('${doc.id}')">삭제</button>
-                    </div>
+function listenT5History() {
+    db.collection("t5_history").where("teamId","==", myTeamId).orderBy("createdAt","desc").limit(20).onSnapshot(ss => {
+        document.getElementById('t5-history-list').innerHTML = ss.docs.map(doc => {
+            const d = doc.data();
+            // 작성자 이름 표시 (닉네임이 있으면 닉네임으로)
+            const displayAuthor = d.userName || d.userEmail.split('@')[0];
+            return `<div class="history-item">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${d.site}</strong>
+                    <span style="font-size:0.75rem; color:var(--primary);">👤 ${displayAuthor}</span>
+                </div>
                 </div>`;
-            }).join('') || "내역 없음";
-        });
-    }
-
-    async function loadT5ToEdit(id) {
-        const doc = await db.collection("t5_history").doc(id).get();
-        const d = doc.data();
-        editingT5Id = id;
-        document.getElementById('siteName').value = d.site;
-        
-        // 규격 목록 불러오기
-        document.getElementById('spec-list').innerHTML = '';
-        d.specs.forEach(s => addSpecRow(s.name, s.size));
-        
-        // 구간 목록 불러오기
-        document.getElementById('area-list').innerHTML = '';
-        d.areas.forEach(a => addAreaRow(a.name, a.len));
-        
-        // [수정된 부분] 규격 섹션을 강제로 열지 않음 (display: block 코드를 삭제함)
-        // 화면을 맨 위로만 올려줍니다.
-        window.scrollTo(0,0);
-        alert("데이터를 불러왔습니다. 수정 후 '계산하기'를 다시 눌러주세요.");
-    }
-
-    async function deleteT5(id) { if(confirm("삭제할까요?")) await db.collection("t5_history").doc(id).delete(); }
-
-    loadDefaultSpecs();
-    addAreaRow();
-</script>
-</body>
-</html>
+        }).join('');
+    });
+}
