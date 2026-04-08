@@ -10,85 +10,82 @@
 }
 
 body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
-.container { max-width: 500px; margin: auto; padding: 15px; box-sizing: border-box; }
+.container { max-width: 500px; margin: auto; padding: 20px; box-sizing: border-box; }
 
-/* [로그인] 자동로그인 왼쪽 정렬 */
-.remember-wrapper {
+/* [메인으로] 버튼 - 더 부드럽고 이쁘게 */
+.btn-home { 
+    background: rgba(55, 65, 81, 0.7); 
+    color: white; 
+    padding: 10px 18px; 
+    font-size: 0.85rem; 
+    border-radius: 20px; 
+    border: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 25px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-home:hover { background: var(--secondary); transform: translateY(-2px); }
+
+/* 입력창 여백 및 글자 간격 대폭 확대 */
+.section-title { 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    margin-bottom: 20px; /* 제목과 입력창 사이 간격 */
+    margin-top: 10px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+
+input, select, textarea { 
+    padding: 16px 20px; /* 내부 여백 확대 */
+    border: 1px solid #4b5563; 
+    border-radius: 14px; 
+    width: 100%; 
+    margin-bottom: 20px; /* 입력창끼리의 간격 확대 */
+    background: var(--input-bg); 
+    color: white; 
+    box-sizing: border-box; 
+    font-size: 1rem;
+    outline: none;
+    box-shadow: none !important; /* 이상한 그림자 제거 */
+}
+
+/* T5 가로 배치 */
+.area-row { display: flex; gap: 12px; margin-bottom: 15px; }
+.area-row input { flex: 1; margin-bottom: 0; }
+
+/* 동그란 + 버튼 그림자 제거 및 깔끔하게 */
+.btn-circle {
+    background: #4b5563; 
+    color: white; 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    font-size: 1.2rem; 
+    border: none;
+    box-shadow: none !important;
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* 왼쪽 정렬 */
-    gap: 10px;
-    margin: 5px 0 20px 5px; /* 약간의 여백 */
-    color: #9ca3af;
-    font-size: 0.95rem;
-    cursor: pointer;
-}
-.remember-wrapper input { width: 20px; height: 20px; margin: 0; }
-
-/* [메인] 상단 큰 로고 (로그인 창과 비슷하게) */
-.nav-logo-area {
-    display: flex;
     justify-content: center;
-    padding: 30px 0;
-}
-.nav-logo {
-    width: 100%;
-    max-width: 260px; /* 로그인 로고와 동일하게 */
-    height: auto;
-    object-fit: contain;
-}
-
-/* [메인] 환영 메시지 및 ⋮ 버튼 한 줄 배치 */
-.welcome-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end; /* 아래쪽 기준 정렬 */
-    margin-bottom: 30px;
-    padding: 0 5px;
-}
-
-.welcome-text h3 { margin: 0; color: var(--primary); font-size: 1.3rem; }
-.welcome-text p { margin: 5px 0 0 0; font-size: 0.85rem; color: #9ca3af; }
-
-.more-btn {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.8rem;
     cursor: pointer;
-    padding: 0;
     line-height: 1;
 }
 
-/* 드롭다운 위치 조정 */
-.dropdown-menu {
-    display: none !important;
-    position: absolute;
-    top: 40px;
-    right: 0;
-    background-color: var(--card);
-    border: 1px solid #374151;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    z-index: 1000;
-    min-width: 140px;
+/* 메인 큰 버튼 */
+.btn-main { 
+    width: 100%; 
+    padding: 18px; 
+    background: var(--primary); 
+    color: white; 
+    font-size: 1.1rem; 
+    border-radius: 16px; 
+    font-weight: bold;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
-.dropdown-menu.show { display: block !important; }
-.dropdown-menu button {
-    display: block; width: 100%; padding: 14px 16px; text-align: left;
-    background: none; color: var(--text); font-size: 0.95rem; border: none;
-    border-bottom: 1px solid #374151; cursor: pointer;
-}
-.dropdown-menu button:last-child { border-bottom: none; }
 
-/* 나머지 카드 및 입력창 스타일 */
-.logo-wrapper { display: flex; justify-content: center; padding: 40px 0; }
-.main-logo { width: 100%; max-width: 260px; height: auto; }
-.card { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
-input { padding: 14px 18px; border: 1px solid #4b5563; border-radius: 12px; width: 100%; margin-bottom: 12px; background: var(--input-bg); color: white; box-sizing: border-box; }
-.btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; font-size: 1.1rem; border-radius: 12px; font-weight: bold; }
-
-.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.menu-item { background: var(--card); padding: 35px 15px; border-radius: 20px; text-align: center; border: 1px solid #374151; cursor: pointer; }
-.menu-item i { font-size: 2.2rem; display: block; margin-bottom: 12px; }
-.menu-item.disabled { opacity: 0.3; }
+.card { background: var(--card); padding: 25px; border-radius: 20px; margin-bottom: 25px; }
