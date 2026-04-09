@@ -17,21 +17,34 @@
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
         .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; padding: 0; }
         
-        /* 이름 칸 (4줄 통합) */
-        .name-cell { width: 75px; background: #1a202c; }
-        .name-input { width: 100%; height: 100%; border: none; background: transparent; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
+        /* 이름 칸 (4줄 통합 및 줄바꿈 설정) */
+        .name-cell { width: 75px; background: #1a202c; padding: 0 !important; }
+        .name-input { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            background: transparent; 
+            color: white; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 0.85rem; 
+            resize: none; /* 크기 조절 비활성화 */
+            padding: 10px 2px; 
+            box-sizing: border-box; 
+            word-break: break-all; /* 글자 단위 줄바꿈 핵심 */
+            overflow: hidden;
+            display: block;
+            line-height: 1.2;
+        }
         
-        /* 날짜 숫자 행 (배경 진하게) */
         .date-num { background: #2d3748; font-size: 0.75rem; font-weight: bold; color: #d1d5db; }
         .sun { color: #ff4d4d !important; } 
         .sat { color: #4dadff !important; }
 
-        /* 공수 입력 칸 */
         .gongsu-cell { cursor: pointer; transition: 0.1s; -webkit-user-select: none; user-select: none; font-weight: bold; font-size: 0.9rem; }
         .gongsu-cell:active { background: var(--primary); }
         .gongsu-cell.filled { color: var(--success); background: rgba(16, 185, 129, 0.1); }
         
-        /* 합계 칸 (계) */
         .label-sum { background: #1a202c; color: var(--text); font-weight: bold; font-size: 0.8rem; }
         .val-sum { background: #1a202c; color: var(--primary); font-weight: bold; font-size: 0.9rem; }
         
@@ -102,7 +115,7 @@
                 <table class="excel-table">
                     <tr>
                         <td rowspan="4" class="name-cell">
-                            <input type="text" class="name-input" value="${w.name}" placeholder="이름" onchange="updateName(${tIdx}, ${wIdx}, this.value)">
+                            <textarea class="name-input" placeholder="이름" onchange="updateName(${tIdx}, ${wIdx}, this.value)">${w.name}</textarea>
                         </td>
                         ${loopDays(year, month, 1, 16, 'date')}
                     </tr>
@@ -193,6 +206,7 @@
                 return `<div class="history-item">
                     <div><b>${d.month}</b> | ${d.site}</div>
                     <button class="btn-edit" onclick="editLog('${doc.id}')">불러오기</button>
+                    <button class="btn-del" onclick="deleteLog('${doc.id}')" style="background:var(--danger); margin-left:5px;">삭제</button>
                 </div>`;
             }).join('');
         });
@@ -205,6 +219,8 @@
         document.getElementById('siteName').value = d.site;
         teamData = d.teamData; renderAllTeams();
     }
+
+    async function deleteLog(id) { if(confirm("정말 삭제할까요?")) await db.collection("monthly_logs").doc(id).delete(); }
 
     document.getElementById('logMonth').onchange = renderAllTeams;
 </script>
