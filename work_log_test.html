@@ -28,16 +28,18 @@
         .val-sum { background: #1a202c; color: var(--primary); font-weight: bold; font-size: 0.9rem; }
         .team-total-bar { text-align: right; padding: 12px; font-size: 0.95rem; color: #f3f4f6; background: rgba(59, 130, 246, 0.1); border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 5px; }
 
-        .history-card { background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); }
-        .history-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .history-info { display: flex; flex-direction: column; gap: 4px; }
+        /* 히스토리 카드 디자인 개선 */
+        .history-card { background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .history-header { display: flex; flex-direction: column; gap: 4px; padding-right: 40px; margin-bottom: 15px; }
         .history-date { font-size: 0.8rem; color: var(--primary); font-weight: bold; }
         .history-site { font-size: 1.05rem; font-weight: bold; color: var(--text); }
-        .history-btns { display: flex; gap: 8px; }
-        .btn-history { flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: bold; cursor: pointer; color: white; }
-        .btn-load { background: #4b5563; }
-        .btn-excel { background: var(--success); }
-        .btn-delete { background: #991b1b; flex: 0.4; }
+        .btn-card-del { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #9ca3af; font-size: 1.2rem; cursor: pointer; }
+        
+        .history-btns { display: flex; gap: 6px; }
+        .btn-history { flex: 1; padding: 10px 0; border-radius: 10px; border: none; font-size: 0.8rem; font-weight: bold; cursor: pointer; color: white; }
+        .btn-edit { background: #4b5563; } /* 수정하기 */
+        .btn-copy { background: #3b82f6; } /* 복사하기 */
+        .btn-excel-save { background: var(--success); } /* 엑셀저장 */
     </style>
 </head>
 <body>
@@ -50,19 +52,16 @@
             <button onclick="addTeam()" class="btn-circle" style="font-size:0.75rem; width:auto; padding:0 12px; border-radius:10px;">+ 팀 추가</button>
         </div>
         <div style="display:flex; gap:10px;">
-            <input type="month" id="logMonth" style="flex:1; margin-bottom:0;">
-            <input type="text" id="siteName" placeholder="연습용 현장명" style="flex:1; margin-bottom:0;">
+            <input type="month" id="logMonth" style="flex:2; margin-bottom:0;">
+            <input type="text" id="siteName" placeholder="현장명 입력" style="flex:3; margin-bottom:0;">
         </div>
     </div>
 
     <div id="team-container"></div>
 
-    <div style="display:flex; gap:10px; margin-bottom:30px;">
-        <button class="btn-main" onclick="saveMonthlyLog()" style="background:var(--success); flex:2;">서버에 저장하기 (덮어쓰기) 💾</button>
-        <button class="btn-main" onclick="saveAsNew()" style="background:var(--primary); flex:1; font-size:0.85rem;">새 파일로 저장 (복사) 📂</button>
-    </div>
+    <button class="btn-main" onclick="saveMonthlyLog()" style="background:var(--success); margin-bottom:40px;">현장 데이터 저장하기 💾</button>
 
-    <div class="section-title" style="margin-bottom:15px;">📂 연습용 불러오기 / 내역</div>
+    <div class="section-title" style="margin-bottom:15px;">📂 기록 내역</div>
     <div id="history-list"></div>
 </div>
 
@@ -158,7 +157,7 @@
     }
 
     function addTeam() {
-        const name = prompt("테스트할 팀 이름을 입력하세요");
+        const name = prompt("팀 이름을 입력하세요");
         if(name) { teamData.push({ teamName: name, workers: [] }); renderAllTeams(); }
     }
 
@@ -178,7 +177,7 @@
             let timer;
             const start = () => timer = setTimeout(() => {
                 const { t, w, d } = cell.dataset;
-                const input = prompt(`공수 수정`, teamData[t].workers[w].days[d]);
+                const input = prompt(`공수 직접 수정`, teamData[t].workers[w].days[d]);
                 if (input !== null) { teamData[t].workers[w].days[d] = input === "0" ? "" : input; renderAllTeams(); }
             }, 700);
             cell.onmousedown = cell.ontouchstart = start;
@@ -186,16 +185,7 @@
         });
     }
 
-    // [핵심] 다른 이름으로 저장 (복사본 생성)
-    async function saveAsNew() {
-        editingId = null; // 기존 ID를 지워서 새로운 문서로 인식하게 함
-        const site = document.getElementById('siteName');
-        if(!site.value.includes("(복사)")) {
-            site.value = site.value + " (복사)"; // 헷갈리지 않게 이름 뒤에 표시
-        }
-        await saveMonthlyLog();
-    }
-
+    // 데이터 저장 로직 (수정 모드와 신규 모드 자동 구분)
     async function saveMonthlyLog() {
         const month = document.getElementById('logMonth').value;
         const site = document.getElementById('siteName').value.trim();
@@ -204,11 +194,12 @@
             const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: myEmail };
             if(editingId) {
                 await db.collection("logs_test").doc(editingId).set(data);
-                alert("기존 기록에 덮어씌워졌습니다.");
+                alert("기존 기록이 수정되었습니다.");
             } else {
                 await db.collection("logs_test").add(data);
-                alert("새로운 기록으로 저장되었습니다.");
+                alert("신규 기록으로 저장되었습니다.");
             }
+            editingId = null; // 저장 후 상태 초기화
             location.reload();
         } catch(e) { alert(e.message); }
     }
@@ -219,31 +210,48 @@
                 const d = doc.data();
                 return `
                 <div class="history-card">
+                    <button class="btn-card-del" onclick="deleteLog('${doc.id}')">×</button>
                     <div class="history-header">
-                        <div class="history-info">
-                            <span class="history-date">TEST: ${d.month}</span>
-                            <span class="history-site">${d.site}</span>
-                        </div>
+                        <span class="history-date">${d.month}</span>
+                        <span class="history-site">${d.site}</span>
                     </div>
                     <div class="history-btns">
-                        <button class="btn-history btn-load" onclick="editLog('${doc.id}')">불러오기</button>
-                        <button class="btn-history btn-delete" onclick="deleteLog('${doc.id}')">삭제</button>
+                        <button class="btn-history btn-edit" onclick="editLog('${doc.id}')">수정하기</button>
+                        <button class="btn-history btn-copy" onclick="copyLog('${doc.id}')">복사</button>
+                        <button class="btn-history btn-excel-save" onclick="alert('준비 중입니다.')">엑셀로 저장</button>
                     </div>
                 </div>`;
-            }).join('') || "연습 내역이 없습니다.";
+            }).join('') || "<p style='text-align:center; color:#666;'>저장된 내역이 없습니다.</p>";
         });
     }
 
+    // [1] 수정하기: 기존 파일 ID를 유지하여 덮어쓰기 모드 진입
     async function editLog(id) {
         const doc = await db.collection("logs_test").doc(id).get();
-        const d = doc.data(); editingId = id;
+        const d = doc.data(); 
+        editingId = id; // 기존 ID 기억
         document.getElementById('logMonth').value = d.month;
         document.getElementById('siteName').value = d.site;
-        teamData = d.teamData; renderAllTeams();
+        teamData = d.teamData; 
+        renderAllTeams();
         window.scrollTo(0, 0);
+        alert("기존 기록을 불러왔습니다. 저장 시 '수정'됩니다.");
     }
 
-    async function deleteLog(id) { if(confirm("연습 데이터 삭제?")) await db.collection("logs_test").doc(id).delete(); }
+    // [2] 복사: 데이터만 가져오고 ID는 비워서 신규 저장 모드 진입
+    async function copyLog(id) {
+        const doc = await db.collection("logs_test").doc(id).get();
+        const d = doc.data(); 
+        editingId = null; // ID를 비움 (신규 저장 처리)
+        document.getElementById('logMonth').value = d.month;
+        document.getElementById('siteName').value = d.site + " (복사)";
+        teamData = d.teamData; 
+        renderAllTeams();
+        window.scrollTo(0, 0);
+        alert("데이터를 복사했습니다. 저장 시 '새 파일'로 저장됩니다.");
+    }
+
+    async function deleteLog(id) { if(confirm("정말 삭제할까요?")) await db.collection("logs_test").doc(id).delete(); }
     document.getElementById('logMonth').onchange = renderAllTeams;
 </script>
 </body>
