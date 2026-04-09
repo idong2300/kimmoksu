@@ -10,30 +10,32 @@
     <script src="firebase-config.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* 엑셀 스타일 표 디자인 */
-        .team-section { margin-bottom: 30px; }
-        .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+        .team-section { margin-bottom: 35px; }
+        .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
         .team-title { font-weight: bold; font-size: 1.1rem; color: var(--text); }
 
-        .excel-table { width: 100%; border-collapse: collapse; background: var(--card); margin-bottom: 5px; table-layout: fixed; }
-        .excel-table td { border: 1px solid #4b5563; text-align: center; height: 35px; font-size: 0.85rem; padding: 0; position: relative; }
+        .excel-table { width: 100%; border-collapse: collapse; background: var(--card); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
+        .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; padding: 0; }
         
-        /* 이름 칸 */
+        /* 이름 칸 (4줄 통합) */
+        .name-cell { width: 75px; background: #1a202c; }
         .name-input { width: 100%; height: 100%; border: none; background: transparent; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
         
-        /* 날짜 숫자 행 */
-        .date-num { background: #2d3748; font-size: 0.75rem; font-weight: bold; }
-        .sun { color: #ff4d4d !important; } /* 일요일 레드 */
-        .sat { color: #4dadff !important; } /* 토요일 블루 */
+        /* 날짜 숫자 행 (배경 진하게) */
+        .date-num { background: #2d3748; font-size: 0.75rem; font-weight: bold; color: #d1d5db; }
+        .sun { color: #ff4d4d !important; } 
+        .sat { color: #4dadff !important; }
 
         /* 공수 입력 칸 */
-        .gongsu-cell { cursor: pointer; transition: 0.2s; -webkit-user-select: none; user-select: none; font-weight: bold; }
+        .gongsu-cell { cursor: pointer; transition: 0.1s; -webkit-user-select: none; user-select: none; font-weight: bold; font-size: 0.9rem; }
         .gongsu-cell:active { background: var(--primary); }
         .gongsu-cell.filled { color: var(--success); background: rgba(16, 185, 129, 0.1); }
         
-        /* 합계 칸 */
-        .sum-cell { background: #1a202c; color: var(--primary); font-weight: bold; }
-        .team-total-bar { text-align: right; padding: 10px; font-size: 0.9rem; color: #9ca3af; background: rgba(255,255,255,0.03); border-radius: 8px; }
+        /* 합계 칸 (계) */
+        .label-sum { background: #1a202c; color: var(--text); font-weight: bold; font-size: 0.8rem; }
+        .val-sum { background: #1a202c; color: var(--primary); font-weight: bold; font-size: 0.9rem; }
+        
+        .team-total-bar { text-align: right; padding: 12px; font-size: 0.95rem; color: #f3f4f6; background: rgba(59, 130, 246, 0.1); border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); }
     </style>
 </head>
 <body>
@@ -58,10 +60,9 @@
 
 <script>
     let myEmail, myTeamId, editingId = null;
-    // 초기 공정 리스트
     let teamData = [
         { teamName: "목공팀", workers: [] },
-        { font: "도장팀", teamName: "도장팀", workers: [] },
+        { teamName: "도장팀", workers: [] },
         { teamName: "필름팀", workers: [] },
         { teamName: "전기팀", workers: [] }
     ];
@@ -78,12 +79,10 @@
         if (!q.empty) { myTeamId = q.docs[0].id; }
     }
 
-    // [핵심] 주말 체크 함수 (2026년 대응)
-    function getDayColorClass(year, month, day) {
-        const date = new Date(year, month - 1, day);
-        const dayOfWeek = date.getDay(); // 0:일, 6:토
-        if (dayOfWeek === 0) return 'sun';
-        if (dayOfWeek === 6) return 'sat';
+    function getDayClass(year, month, day) {
+        const d = new Date(year, month - 1, day);
+        if (d.getDay() === 0) return 'sun';
+        if (d.getDay() === 6) return 'sat';
         return '';
     }
 
@@ -94,26 +93,27 @@
         
         container.innerHTML = teamData.map((team, tIdx) => {
             let teamTotal = 0;
-            const workerTables = team.workers.map((w, wIdx) => {
-                let pTotal = 0;
-                Object.values(w.days).forEach(v => pTotal += parseFloat(v || 0));
-                teamTotal += pTotal;
+            const tables = team.workers.map((w, wIdx) => {
+                let pSum = 0;
+                Object.values(w.days).forEach(v => pSum += parseFloat(v || 0));
+                teamTotal += pSum;
 
                 return `
                 <table class="excel-table">
                     <tr>
-                        <td rowspan="2" style="width:70px;">
-                            <input type="text" class="name-input" value="${w.name}" placeholder="이름" 
-                                   onchange="updateName(${tIdx}, ${wIdx}, this.value)">
+                        <td rowspan="4" class="name-cell">
+                            <input type="text" class="name-input" value="${w.name}" placeholder="이름" onchange="updateName(${tIdx}, ${wIdx}, this.value)">
                         </td>
-                        ${renderDateRow(year, month, 1, 16)}
+                        ${loopDays(year, month, 1, 16, 'date')}
+                    </tr>
+                    <tr>${loopDays(year, month, 1, 16, 'input', tIdx, wIdx)}</tr>
+                    <tr>
+                        ${loopDays(year, month, 17, 31, 'date', 0, 0, lastDay)}
+                        <td class="label-sum">계</td>
                     </tr>
                     <tr>
-                        ${renderDateRow(year, month, 17, 31, lastDay, true, tIdx, wIdx, pTotal)}
-                    </tr>
-                    <tr>
-                        <td colspan="16"></td>
-                        <td class="sum-cell" style="font-size:0.7rem;">계</td>
+                        ${loopDays(year, month, 17, 31, 'input', tIdx, wIdx, lastDay)}
+                        <td class="val-sum">${pSum % 1 === 0 ? pSum : pSum.toFixed(1)}</td>
                     </tr>
                 </table>`;
             }).join('');
@@ -124,49 +124,36 @@
                     <span class="team-title">${team.teamName} 인원 명단</span>
                     <button class="btn-circle" onclick="addWorker(${tIdx})">+</button>
                 </div>
-                ${workerTables}
-                <div class="team-total-bar">${team.teamName} 합계 공수: <b>${teamTotal.toFixed(1)}</b></div>
+                ${tables}
+                <div class="team-total-bar">${team.teamName} 합계 공수: <b>${teamTotal % 1 === 0 ? teamTotal : teamTotal.toFixed(1)}</b></div>
             </div>`;
         }).join('');
-        
         bindLongPress();
     }
 
-    function renderDateRow(year, month, start, end, lastDay = 31, isGongsu = false, tIdx, wIdx, pTotal) {
-        let nums = "", cells = "";
+    function loopDays(y, m, start, end, type, tIdx, wIdx, lastDay = 31) {
+        let html = "";
         for (let d = start; d <= end; d++) {
-            const colorClass = getDayColorClass(year, month, d);
-            if (!isGongsu) {
-                // 상단 날짜 숫자 행
-                nums += `<td class="date-num ${colorClass}">${d}</td>`;
+            const isInvalid = d > lastDay;
+            const colorClass = isInvalid ? '' : getDayClass(y, m, d);
+            
+            if (type === 'date') {
+                html += `<td class="date-num ${colorClass}">${isInvalid ? '' : d}</td>`;
             } else {
-                // 하단 공수 입력 행
-                if (d > lastDay && d <= 31) {
-                    cells += `<td style="background:#1a202c;"></td>`; // 없는 날짜 (31일 등)
-                } else if (d === 32) { // '계' 자리 (논리적 위치)
-                    cells += `<td class="sum-cell">${pTotal.toFixed(1)}</td>`;
+                if (isInvalid) {
+                    html += `<td style="background:#111827;"></td>`;
                 } else {
                     const val = teamData[tIdx].workers[wIdx].days[d] || "";
-                    cells += `<td class="gongsu-cell ${val?'filled':''}" 
-                                  data-t="${tIdx}" data-w="${wIdx}" data-d="${d}" 
-                                  onclick="handleCellClick(this)">${val}</td>`;
+                    html += `<td class="gongsu-cell ${val?'filled':''}" data-t="${tIdx}" data-w="${wIdx}" data-d="${d}" onclick="handleCellClick(this)">${val}</td>`;
                 }
             }
         }
-        // 하단행의 마지막 '계' 칸 추가
-        if (isGongsu) cells += `<td class="sum-cell">${pTotal.toFixed(1)}</td>`;
-        return isGongsu ? cells : nums;
+        return html;
     }
 
-    function addWorker(tIdx) {
-        teamData[tIdx].workers.push({ name: "", days: {} });
-        renderAllTeams();
-    }
-
-    function updateName(tIdx, wIdx, val) {
-        teamData[tIdx].workers[wIdx].name = val;
-    }
-
+    function addWorker(tIdx) { teamData[tIdx].workers.push({ name: "", days: {} }); renderAllTeams(); }
+    function updateName(tIdx, wIdx, val) { teamData[tIdx].workers[wIdx].name = val; }
+    
     function handleCellClick(el) {
         const { t, w, d } = el.dataset;
         const current = parseFloat(teamData[t].workers[w].days[d] || 0);
@@ -181,22 +168,21 @@
                 const { t, w, d } = cell.dataset;
                 const input = prompt(`${teamData[t].workers[w].name || '작업자'} - ${d}일 공수 수정`, teamData[t].workers[w].days[d]);
                 if (input !== null) { teamData[t].workers[w].days[d] = input === "0" ? "" : input; renderAllTeams(); }
-            }, 800);
-            const end = () => clearTimeout(timer);
-            cell.ontouchstart = start; cell.ontouchend = end;
-            cell.onmousedown = start; cell.onmouseup = end;
+            }, 700);
+            cell.onmousedown = cell.ontouchstart = start;
+            cell.onmouseup = cell.ontouchend = () => clearTimeout(timer);
         });
     }
 
     async function saveMonthlyLog() {
         const month = document.getElementById('logMonth').value;
         const site = document.getElementById('siteName').value.trim();
-        if(!site) return alert("현장명 필수!");
+        if(!site) return alert("현장명을 입력하세요.");
         try {
-            const finalData = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now() };
-            if(editingId) await db.collection("monthly_logs").doc(editingId).set(finalData);
-            else await db.collection("monthly_logs").add(finalData);
-            alert("저장완료!"); location.reload();
+            const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now() };
+            if(editingId) await db.collection("monthly_logs").doc(editingId).set(data);
+            else await db.collection("monthly_logs").add(data);
+            alert("저장되었습니다."); location.reload();
         } catch(e) { alert(e.message); }
     }
 
@@ -214,13 +200,10 @@
 
     async function editLog(id) {
         const doc = await db.collection("monthly_logs").doc(id).get();
-        const d = doc.data();
-        editingId = id;
+        const d = doc.data(); editingId = id;
         document.getElementById('logMonth').value = d.month;
         document.getElementById('siteName').value = d.site;
-        teamData = d.teamData;
-        renderAllTeams();
-        alert("데이터 로드 완료");
+        teamData = d.teamData; renderAllTeams();
     }
 
     document.getElementById('logMonth').onchange = renderAllTeams;
