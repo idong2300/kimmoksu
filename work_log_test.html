@@ -10,7 +10,6 @@
     <script src="firebase-config.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* 최신 디자인 그대로 유지 */
         .team-section { margin-bottom: 35px; }
         .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid var(--primary); padding-bottom: 8px; }
         .team-title { font-weight: bold; font-size: 1.1rem; color: var(--text); }
@@ -58,7 +57,10 @@
 
     <div id="team-container"></div>
 
-    <button class="btn-main" onclick="saveMonthlyLog()" style="background:var(--success); margin-bottom:30px;">연습 데이터 저장하기 📁</button>
+    <div style="display:flex; gap:10px; margin-bottom:30px;">
+        <button class="btn-main" onclick="saveMonthlyLog()" style="background:var(--success); flex:2;">서버에 저장하기 (덮어쓰기) 💾</button>
+        <button class="btn-main" onclick="saveAsNew()" style="background:var(--primary); flex:1; font-size:0.85rem;">새 파일로 저장 (복사) 📂</button>
+    </div>
 
     <div class="section-title" style="margin-bottom:15px;">📂 연습용 불러오기 / 내역</div>
     <div id="history-list"></div>
@@ -184,21 +186,35 @@
         });
     }
 
-    // [중요] 연습용 박스(logs_test) 사용
+    // [핵심] 다른 이름으로 저장 (복사본 생성)
+    async function saveAsNew() {
+        editingId = null; // 기존 ID를 지워서 새로운 문서로 인식하게 함
+        const site = document.getElementById('siteName');
+        if(!site.value.includes("(복사)")) {
+            site.value = site.value + " (복사)"; // 헷갈리지 않게 이름 뒤에 표시
+        }
+        await saveMonthlyLog();
+    }
+
     async function saveMonthlyLog() {
         const month = document.getElementById('logMonth').value;
         const site = document.getElementById('siteName').value.trim();
-        if(!site) return alert("연습용 현장명을 입력하세요.");
+        if(!site) return alert("현장명을 입력하세요.");
         try {
-            const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now() };
-            if(editingId) await db.collection("logs_test").doc(editingId).set(data);
-            else await db.collection("logs_test").add(data);
-            alert("연습 데이터 저장 성공!"); location.reload();
+            const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: myEmail };
+            if(editingId) {
+                await db.collection("logs_test").doc(editingId).set(data);
+                alert("기존 기록에 덮어씌워졌습니다.");
+            } else {
+                await db.collection("logs_test").add(data);
+                alert("새로운 기록으로 저장되었습니다.");
+            }
+            location.reload();
         } catch(e) { alert(e.message); }
     }
 
     function loadHistory() {
-        db.collection("logs_test").where("teamId","==", myTeamId).orderBy("updatedAt","desc").limit(5).onSnapshot(ss => {
+        db.collection("logs_test").where("teamId","==", myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => {
             document.getElementById('history-list').innerHTML = ss.docs.map(doc => {
                 const d = doc.data();
                 return `
@@ -228,7 +244,6 @@
     }
 
     async function deleteLog(id) { if(confirm("연습 데이터 삭제?")) await db.collection("logs_test").doc(id).delete(); }
-
     document.getElementById('logMonth').onchange = renderAllTeams;
 </script>
 </body>
