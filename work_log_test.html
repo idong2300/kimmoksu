@@ -16,13 +16,22 @@
         .team-title { font-weight: bold; font-size: 1.1rem; color: var(--text); }
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
         .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; padding: 0; }
+        
+        /* 웹 날짜 행 높이 축소 */
+        .date-row td { height: 22px !important; }
         .name-cell { width: 75px; background: #1a202c; }
-        .name-wrapper { display: flex; align-items: center; justify-content: center; height: 152px; width: 100%; flex-direction: column; }
+        .name-wrapper { display: flex; align-items: center; justify-content: center; height: 120px; width: 100%; flex-direction: column; }
         .name-input { width: 95%; border: none; background: transparent; color: white; text-align: center; font-weight: bold; font-size: 0.85rem; resize: none; outline: none; }
+        
         .date-num { background: #2d3748; font-size: 0.75rem; font-weight: bold; color: #d1d5db; }
         .sun { color: #ff4d4d !important; } .sat { color: #4dadff !important; }
-        .gongsu-cell { cursor: pointer; font-weight: bold; font-size: 0.9rem; -webkit-user-select: none; user-select: none; }
-        .gongsu-cell.filled { color: var(--success); background: rgba(16, 185, 129, 0.1); }
+        
+        /* 공수 신호등 색상 */
+        .gongsu-cell { cursor: pointer; font-weight: bold; font-size: 0.9rem; -webkit-user-select: none; user-select: none; transition: 0.2s; }
+        .g-green { background: rgba(16, 185, 129, 0.2) !important; color: #10b981 !important; }
+        .g-yellow { background: rgba(245, 158, 11, 0.2) !important; color: #f59e0b !important; }
+        .g-red { background: rgba(239, 68, 68, 0.2) !important; color: #ef4444 !important; }
+        
         .team-total-bar { text-align: right; padding: 12px; font-size: 0.95rem; color: #f3f4f6; background: rgba(59, 130, 246, 0.1); border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); }
         .history-card { background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .history-btns { display: flex; gap: 6px; margin-top: 15px; }
@@ -81,9 +90,17 @@
                 teamTotal += pSum;
                 return `
                 <table class="excel-table">
-                    <tr><td rowspan="4" class="name-cell"><div class="name-wrapper"><textarea class="name-input" onchange="updateName(${tIdx}, ${wIdx}, this.value)">${w.name}</textarea><button onclick="removeWorker(${tIdx}, ${wIdx})" style="background:#991b1b; color:white; border:none; border-radius:5px; font-size:0.65rem; padding:3px 8px; cursor:pointer; margin-top:5px;">삭제</button></div></td>${loopDays(year, month, 1, 16, 'date')}</tr>
+                    <tr class="date-row">
+                        <td rowspan="4" class="name-cell">
+                            <div class="name-wrapper">
+                                <textarea class="name-input" onchange="updateName(${tIdx}, ${wIdx}, this.value)">${w.name}</textarea>
+                                <button onclick="removeWorker(${tIdx}, ${wIdx})" style="background:#991b1b; color:white; border:none; border-radius:5px; font-size:0.65rem; padding:3px 8px; cursor:pointer; margin-top:5px;">삭제</button>
+                            </div>
+                        </td>
+                        ${loopDays(year, month, 1, 16, 'date')}
+                    </tr>
                     <tr>${loopDays(year, month, 1, 16, 'input', tIdx, wIdx)}</tr>
-                    <tr>${loopDays(year, month, 17, 31, 'date', 0, 0, lastDay)}<td class="label-sum" style="background:#1a202c; color:white;">계</td></tr>
+                    <tr class="date-row">${loopDays(year, month, 17, 31, 'date', 0, 0, lastDay)}<td class="label-sum" style="background:#1a202c; color:white;">계</td></tr>
                     <tr>${loopDays(year, month, 17, 31, 'input', tIdx, wIdx, lastDay)}<td class="val-sum" style="color:var(--primary); font-weight:bold;">${pSum % 1 === 0 ? pSum : pSum.toFixed(1)}</td></tr>
                 </table>`;
             }).join('');
@@ -101,7 +118,14 @@
                 if (isInvalid) html += `<td style="background:#111827;"></td>`;
                 else {
                     const val = teamData[tIdx].workers[wIdx].days[d] || "";
-                    html += `<td class="gongsu-cell ${val?'filled':''}" data-t="${tIdx}" data-w="${wIdx}" data-d="${d}" onclick="handleCellClick(this)">${val}</td>`;
+                    let colorClass = "";
+                    if(val) {
+                        const n = parseFloat(val);
+                        if(n > 2) colorClass = "g-red";
+                        else if(n > 1) colorClass = "g-yellow";
+                        else colorClass = "g-green";
+                    }
+                    html += `<td class="gongsu-cell ${colorClass}" data-t="${tIdx}" data-w="${wIdx}" data-d="${d}" onclick="handleCellClick(this)">${val}</td>`;
                 }
             }
         }
@@ -114,7 +138,6 @@
     function removeWorker(tIdx, wIdx) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); }
     function updateName(tIdx, wIdx, val) { teamData[tIdx].workers[wIdx].name = val; }
     
-    // 단순 클릭 시 1 <-> 공백 토글
     function handleCellClick(el) {
         const { t, w, d } = el.dataset;
         const current = parseFloat(teamData[t].workers[w].days[d] || 0);
@@ -122,17 +145,13 @@
         renderAllTeams();
     }
 
-    // [복구] 롱클릭 시 소수점 등 직접 입력
     function bindLongPress() {
         document.querySelectorAll('.gongsu-cell').forEach(cell => {
             let timer;
             const start = () => timer = setTimeout(() => {
                 const { t, w, d } = cell.dataset;
                 const input = prompt(`${teamData[t].workers[w].name || '작업자'} - ${d}일 공수 직접 입력`, teamData[t].workers[w].days[d]);
-                if (input !== null) { 
-                    teamData[t].workers[w].days[d] = (input === "0" ? "" : input); 
-                    renderAllTeams(); 
-                }
+                if (input !== null) { teamData[t].workers[w].days[d] = (input === "0" ? "" : input); renderAllTeams(); }
             }, 700);
             cell.onmousedown = cell.ontouchstart = start;
             cell.onmouseup = cell.ontouchend = () => clearTimeout(timer);
@@ -172,9 +191,9 @@
         const lastDayNum = new Date(year, monthNum, 0).getDate();
 
         const wb = XLSX.utils.book_new();
-        const wsData = Array.from({ length: 4 }, () => Array(36).fill(""));
+        // 1~5행까지 확보 (4번행 밑 공백을 위해 length 5)
+        const wsData = Array.from({ length: 5 }, () => Array(36).fill(""));
 
-        // 제목 및 정보
         wsData[0][0] = `${year}년 ${monthNum}월 현장 작업 일보 (김목수이야기)`;
         wsData[1][0] = `현장명: ${data.site}`;
         wsData[1][12] = `기간: ${year}.${monthNum}.01 ~ ${monthNum}.${lastDayNum}`;
@@ -183,9 +202,10 @@
         const headerRow = ["NO", "공정", "이 름"];
         for(let d=1; d<=31; d++) headerRow.push(d);
         headerRow.push("계", "비고");
-        wsData[3] = headerRow;
+        wsData[3] = headerRow; // 4번 행 (헤더)
+        // wsData[4]는 자동으로 공백 (5번 행)
 
-        let curR = 4;
+        let curR = 5;
         let totalNo = 1;
 
         data.teamData.forEach(team => {
@@ -220,13 +240,16 @@
 
         ws['!cols'] = [
             { wch: 4.5 }, { wch: 11 }, { wch: 11 },
-            ...Array(31).fill({ wch: 2.2 }), // 날짜 너비 축소
+            ...Array(31).fill({ wch: 2.2 }),
             { wch: 7 }, { wch: 10 }
         ];
 
         ws['!rows'] = [
-            { hpt: 55 }, // 제목 행 높이 3배 유지
-            { hpt: 25 }
+            { hpt: 55 }, // 1행 제목
+            { hpt: 25 }, // 2행 정보
+            { hpt: 12 }, // 3행 절반 높이 (요청 사항)
+            { hpt: 25 }, // 4행 헤더
+            { hpt: 12 }  // 5행 절반 높이 (요청 사항 - 공백행)
         ];
 
         XLSX.utils.book_append_sheet(wb, ws, "근무현황");
