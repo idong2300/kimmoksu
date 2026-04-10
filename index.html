@@ -3,28 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <meta property="og:title" content="김목수이야기 - 스마트 작업일보">
+    <meta property="og:description" content="현장 공수 관리 및 엑셀 자동 변환 시스템">
+    <meta property="og:image" content="og-image.png">
+
     <title>김목수이야기 - 홈</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="firebase-config.js"></script>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* 대시보드 및 로그인 화면 디자인 보강 */
+        body { background-color: #0f172a; color: white; }
+        .card { background: #1e293b; border: 1px solid rgba(255,255,255,0.05); }
+        .menu-item { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
+        .menu-item:active { transform: scale(0.95); background: #334155; }
+        .menu-item.test-btn { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+        
+        /* 로고 애니메이션 */
+        .auth-logo { width: 100%; max-width: 220px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1)); }
+        
+        /* 닉네임 강조 */
+        #displayUserName { font-weight: 800; letter-spacing: -0.5px; }
+    </style>
 </head>
 <body>
 <div class="container">
     <div id="auth-box" style="display:none;">
-        <div style="display:flex; justify-content:center; padding:40px 0;"><img src="kimmoksu_main_logo.png" style="width:100%; max-width:260px;"></div>
+        <div style="display:flex; justify-content:center; padding:50px 0;">
+            <img src="kimmoksu_main_logo.png" class="auth-logo">
+        </div>
         <div class="card">
-            <h2 id="auth-title" style="text-align: center; margin-bottom: 20px;">로그인</h2>
-            <input type="text" id="userNick" placeholder="사용할 닉네임" style="display:none;">
+            <h2 id="auth-title" style="text-align: center; margin-bottom: 25px; font-weight: 800;">로그인</h2>
+            <input type="text" id="userNick" placeholder="현장에서 사용할 이름/닉네임" style="display:none;">
             <input type="email" id="userEmail" placeholder="이메일 주소">
             <input type="password" id="userPw" placeholder="비밀번호">
-            <label class="remember-wrapper">
+            <label class="remember-wrapper" style="margin-top:10px;">
                 <input type="checkbox" id="rememberMe" checked>
-                <span>자동 로그인 유지</span>
+                <span style="font-size:0.85rem; color:#94a3b8;">자동 로그인 유지</span>
             </label>
-            <button class="btn-main" onclick="handleAuth()">접속하기</button>
-            <p style="text-align:center; margin-top:20px; color:#9ca3af; cursor:pointer;" onclick="toggleAuthMode()">아이디가 없나요? <b id="toggle-link">회원가입</b></p>
+            <button class="btn-main" onclick="handleAuth()" style="margin-top:20px;">현장 접속하기</button>
+            <p style="text-align:center; margin-top:25px; color:#94a3b8; font-size:0.9rem; cursor:pointer;" onclick="toggleAuthMode()">
+                아이디가 없나요? <b id="toggle-link" style="color:var(--primary); margin-left:5px;">회원가입</b>
+            </p>
         </div>
     </div>
 
@@ -32,28 +59,50 @@
         <div class="top-nav">
             <img src="kimmoksu_main_logo.png" alt="로고" class="nav-logo" onclick="location.reload()">
             <div class="more-btn-wrapper">
-                <button style="background:none; border:none; color:white; font-size:1.8rem;" onclick="toggleDropdown(event)">⋮</button>
+                <button style="background:none; border:none; color:white; font-size:1.8rem; cursor:pointer;" onclick="toggleDropdown(event)">⋮</button>
                 <div id="myDropdown" class="dropdown-menu">
                     <button onclick="location.href='profile.html'">⚙️ 내 정보 수정</button>
                     <button onclick="location.href='team.html'">👤 팀원 관리</button>
+                    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:5px 0;">
                     <button onclick="handleLogout()" style="color:var(--danger);">🚪 로그아웃</button>
                 </div>
             </div>
         </div>
-        <div style="margin-bottom: 30px; text-align: center;">
-            <h3 id="displayUserName" style="margin:0; color:var(--primary);"></h3>
-            <p style="font-size:0.85rem; color:#9ca3af; margin-top:5px;">현장 관리를 시작합니다.</p>
+
+        <div style="margin-bottom: 40px; text-align: center; padding-top:20px;">
+            <h2 id="displayUserName" style="margin:0; color:var(--primary); font-size:1.6rem;"></h2>
+            <p style="font-size:0.9rem; color:#94a3b8; margin-top:8px;">오늘도 안전하게 현장을 관리하세요.</p>
         </div>
+
         <div class="menu-grid">
-            <div class="menu-item" onclick="location.href='t5.html'"><i>💡</i><span>T5 계산기</span></div>
-            <div class="menu-item" onclick="location.href='monthly_log.html'"><i>📝</i><span>작업일보</span></div>
-            <div class="menu-item disabled" onclick="alert('준비중')"><i>🎨</i><span>줄눈 계산기</span></div>
-            <div class="menu-item disabled" onclick="alert('준비중')"><i>🛠️</i><span>공구 관리</span></div>
+            <div class="menu-item" onclick="location.href='monthly_log.html'">
+                <i style="font-size:1.8rem; margin-bottom:8px; display:block;">📝</i>
+                <span>실전 작업일보</span>
+            </div>
+            <div class="menu-item test-btn" onclick="location.href='work_log_test.html'">
+                <i style="font-size:1.8rem; margin-bottom:8px; display:block;">🧪</i>
+                <span>연습용 장부</span>
+            </div>
+            <div class="menu-item" onclick="location.href='t5.html'">
+                <i style="font-size:1.8rem; margin-bottom:8px; display:block;">💡</i>
+                <span>T5 계산기</span>
+            </div>
+            <div class="menu-item disabled" onclick="alert('준비중입니다.')">
+                <i style="font-size:1.8rem; margin-bottom:8px; display:block;">🎨</i>
+                <span>줄눈 계산기</span>
+            </div>
+        </div>
+        
+        <div style="text-align:center; margin-top:60px; color:#475569; font-size:0.75rem;">
+            © 2026 Story of Kimmoksu. All rights reserved.
         </div>
     </div>
 </div>
+
 <script>
     let isLoginMode = true;
+
+    // 로그인 상태 감시
     auth.onAuthStateChanged(async user => {
         if (user) { 
             const userDoc = await db.collection("users").doc(user.email).get();
@@ -64,16 +113,59 @@
             document.getElementById('dashboard-box').style.display='none'; 
         }
     });
-    function toggleDropdown(e) { e.stopPropagation(); document.getElementById("myDropdown").classList.toggle("show"); }
-    window.onclick = () => { const d = document.getElementById("myDropdown"); if(d && d.classList.contains('show')) d.classList.remove('show'); }
-    function toggleAuthMode() { isLoginMode = !isLoginMode; document.getElementById('auth-title').innerText = isLoginMode ? "로그인" : "회원가입"; document.getElementById('userNick').style.display = isLoginMode ? "none" : "block"; }
-    async function handleAuth() {
-        const email = document.getElementById('userEmail').value.trim(), pw = document.getElementById('userPw').value.trim(), nick = document.getElementById('userNick').value.trim();
-        if(!email || !pw) return alert("입력해주세요.");
-        try { if(isLoginMode) { await auth.signInWithEmailAndPassword(email, pw); } else { await auth.createUserWithEmailAndPassword(email, pw); await db.collection("users").doc(email).set({ nickname: nick, email: email }); } } catch(e) { alert(e.message); }
+
+    // 드롭다운 메뉴 제어
+    function toggleDropdown(e) { 
+        e.stopPropagation(); 
+        document.getElementById("myDropdown").classList.toggle("show"); 
     }
-    function showDashboard(n) { document.getElementById('auth-box').style.display='none'; document.getElementById('dashboard-box').style.display='block'; document.getElementById('displayUserName').innerText = `${n}님 반갑습니다!`; }
-    async function handleLogout() { if(confirm("로그아웃?")) { await auth.signOut(); location.reload(); } }
+    
+    window.onclick = () => { 
+        const d = document.getElementById("myDropdown"); 
+        if(d && d.classList.contains('show')) d.classList.remove('show'); 
+    }
+
+    // 로그인/회원가입 모드 전환
+    function toggleAuthMode() { 
+        isLoginMode = !isLoginMode; 
+        document.getElementById('auth-title').innerText = isLoginMode ? "로그인" : "회원가입"; 
+        document.getElementById('userNick').style.display = isLoginMode ? "none" : "block"; 
+        document.getElementById('toggle-link').innerText = isLoginMode ? "회원가입" : "로그인으로";
+    }
+
+    // 인증 처리 (로그인 및 회원가입)
+    async function handleAuth() {
+        const email = document.getElementById('userEmail').value.trim();
+        const pw = document.getElementById('userPw').value.trim();
+        const nick = document.getElementById('userNick').value.trim();
+        
+        if(!email || !pw) return alert("이메일과 비밀번호를 입력해주세요.");
+        
+        try { 
+            if(isLoginMode) { 
+                await auth.signInWithEmailAndPassword(email, pw); 
+            } else { 
+                if(!nick) return alert("사용하실 이름을 입력해주세요.");
+                await auth.createUserWithEmailAndPassword(email, pw); 
+                await db.collection("users").doc(email).set({ nickname: nick, email: email, createdAt: Date.now() }); 
+            } 
+        } catch(e) { 
+            alert(e.message); 
+        }
+    }
+
+    function showDashboard(n) { 
+        document.getElementById('auth-box').style.display='none'; 
+        document.getElementById('dashboard-box').style.display='block'; 
+        document.getElementById('displayUserName').innerText = `${n}님, 반갑습니다!`; 
+    }
+
+    async function handleLogout() { 
+        if(confirm("정말 로그아웃 하시겠습니까?")) { 
+            await auth.signOut(); 
+            location.reload(); 
+        } 
+    }
 </script>
 </body>
 </html>
