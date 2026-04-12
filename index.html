@@ -6,10 +6,10 @@
     
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="favicon.png">
-    <meta property="og:title" content="김목수이야기 - All-in-One 시스템">
+    <meta property="og:title" content="김목수이야기 - All-in-One">
     <meta property="og:image" content="og-image.png">
 
-    <title>김목수이야기 - 통합 관리 대시보드</title>
+    <title>김목수이야기 - 통합 관리 시스템</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -32,51 +32,41 @@
 
         body { background-color: var(--bg-deep); color: #f8fafc; font-family: 'Pretendard', sans-serif; margin: 0; overflow: hidden; }
 
-        /* [레이아웃] 사이드바 & 메인 영역 */
         .app-wrapper { display: flex; height: 100vh; width: 100vw; }
-        
-        .sidebar {
-            width: 260px; background-color: var(--sidebar-bg);
-            border-right: 1px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; transition: 0.3s;
-        }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: 0.3s; z-index: 1000; }
+        .main-container { flex: 1; overflow-y: auto; background-color: var(--bg-deep); padding-bottom: 50px; }
 
-        .main-container { flex: 1; overflow-y: auto; position: relative; background-color: var(--bg-deep); }
-
-        /* [메뉴 스타일 & POP 효과] */
+        /* 메뉴 POP 효과 */
         .nav-link {
             color: #94a3b8; padding: 14px 20px; margin: 4px 15px; border-radius: 12px;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer; display: flex; align-items: center; text-decoration: none;
         }
         .nav-link i { font-size: 1.2rem; margin-right: 12px; }
-        .nav-link:hover, .nav-link.active {
-            background-color: var(--primary-accent); color: white;
-            transform: translateX(8px) scale(1.02);
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
-        }
+        .nav-link:hover, .nav-link.active { background-color: var(--primary-accent); color: white; transform: translateX(8px) scale(1.02); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2); }
 
-        /* [콘텐츠 섹션 제어] */
+        /* 섹션 제어 */
         .page-section { display: none; padding: 40px; animation: fadeIn 0.4s ease-out; }
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* [작업일보 전용 스타일 - 기존과 동일] */
+        /* 작업일보 테이블 스타일 */
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card-bg); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
         .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; color: white; }
-        .date-row td { height: 22px !important; background: #2d3748; font-size: 0.75rem; }
-        .name-cell { width: 75px; background: #1a202c !important; }
+        .date-row td { height: 22px !important; background: #2d3748; font-size: 0.75rem; color: #94a3b8; }
+        .name-cell { width: 75px; background: #1a202c !important; font-weight: bold; }
         .gongsu-cell { cursor: pointer; font-weight: bold; -webkit-user-select: none; user-select: none; }
         .g-green { background: rgba(16, 185, 129, 0.2) !important; color: #10b981 !important; }
         .g-yellow { background: rgba(245, 158, 11, 0.2) !important; color: #f59e0b !important; }
         .g-red { background: rgba(239, 68, 68, 0.2) !important; color: #ef4444 !important; }
 
-        /* 로그인 화면 전용 */
-        #auth-overlay {
-            position: fixed; inset: 0; background: var(--bg-deep); z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .login-card { background: var(--card-bg); padding: 40px; border-radius: 20px; width: 100%; max-width: 380px; text-align: center; }
+        /* 계산기 스타일 */
+        .calc-card { background: var(--card-bg); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .calc-result-item { background: #0f172a; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* 로그인 레이어 */
+        #auth-overlay { position: fixed; inset: 0; background: var(--bg-deep); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -85,10 +75,10 @@
     <div class="login-card">
         <img src="kimmoksu_main_logo.png" style="max-width: 180px; margin-bottom: 30px;">
         <h3 id="auth-title" class="mb-4 fw-bold">현장 관리 접속</h3>
-        <input type="text" id="userNick" class="form-control bg-dark text-white border-secondary mb-3" placeholder="닉네임" style="display:none;">
-        <input type="email" id="userEmail" class="form-control bg-dark text-white border-secondary mb-3" placeholder="이메일">
-        <input type="password" id="userPw" class="form-control bg-dark text-white border-secondary mb-4" placeholder="비밀번호">
-        <button class="btn btn-primary w-100 fw-bold py-2" onclick="handleAuth()">접속하기</button>
+        <input type="text" id="userNick" class="form-control bg-dark text-white border-secondary mb-3 py-2" placeholder="닉네임" style="display:none;">
+        <input type="email" id="userEmail" class="form-control bg-dark text-white border-secondary mb-3 py-2" placeholder="이메일">
+        <input type="password" id="userPw" class="form-control bg-dark text-white border-secondary mb-4 py-2" placeholder="비밀번호">
+        <button class="btn btn-primary w-100 fw-bold py-2 shadow" onclick="handleAuth()">현장 접속하기</button>
         <p class="mt-4 text-secondary small" onclick="toggleAuthMode()" style="cursor:pointer;">계정이 없으신가요? <b class="text-primary">회원가입</b></p>
     </div>
 </div>
@@ -96,68 +86,97 @@
 <div class="app-wrapper">
     <nav class="sidebar">
         <div class="p-4 text-center border-bottom border-secondary border-opacity-10">
-            <img src="kimmoksu_main_logo.png" alt="로고" style="max-width: 140px;">
+            <img src="kimmoksu_main_logo.png" alt="로고" style="max-width: 140px; cursor: pointer;" onclick="location.reload()">
         </div>
-        
         <div class="flex-grow-1 mt-4">
-            <div class="nav-link active" onclick="showPage('home', this)"><i class="bi bi-house-door"></i> 대시보드</div>
+            <div class="nav-link active" onclick="showPage('home', this)"><i class="bi bi-grid-fill"></i> 대시보드</div>
             <div class="nav-link" onclick="showPage('worklog', this)"><i class="bi bi-journal-check"></i> 실전 작업일보</div>
             <div class="nav-link" onclick="showPage('t5', this)"><i class="bi bi-calculator"></i> T5 계산기</div>
         </div>
-
         <div class="p-4 border-top border-secondary border-opacity-10">
             <div class="d-flex align-items-center">
                 <i class="bi bi-person-circle fs-3 me-3 text-primary"></i>
                 <div class="flex-grow-1 overflow-hidden">
                     <div id="userNickDisplay" class="fw-bold text-truncate">사용자</div>
-                    <div class="small text-secondary" style="font-size:0.7rem;">Story of Kimmoksu</div>
+                    <div class="small text-secondary" style="font-size:0.7rem;">Story of Kimmoksu Pro</div>
                 </div>
-                <i class="bi bi-box-arrow-right text-danger fs-4 cursor-pointer" onclick="handleLogout()" style="cursor:pointer;"></i>
+                <i class="bi bi-box-arrow-right text-danger fs-4 ms-2" onclick="handleLogout()" style="cursor:pointer;"></i>
             </div>
         </div>
     </nav>
 
     <main class="main-container">
-        
         <section id="page-home" class="page-section active">
             <h1 id="welcomeMsg" class="fw-bold mb-3">반갑습니다!</h1>
-            <p class="text-secondary fs-5 mb-5">오늘의 현장 관리를 시작하세요.</p>
+            <p class="text-secondary fs-5 mb-5">오늘의 현장 상황을 스마트하게 관리하세요.</p>
             <div class="row g-4">
-                <div class="col-md-6"><div class="dash-card p-4 h-100 bg-dark border-secondary border-opacity-25 rounded-4" onclick="showPage('worklog', document.querySelectorAll('.nav-link')[1])"><h3>📝 작업일보 작성</h3><p class="text-secondary">공수 기입 및 엑셀 출력을 시작합니다.</p></div></div>
-                <div class="col-md-6"><div class="dash-card p-4 h-100 bg-dark border-secondary border-opacity-25 rounded-4" onclick="showPage('t5', document.querySelectorAll('.nav-link')[2])"><h3>💡 T5 물량 산출</h3><p class="text-secondary">간접조명 자재 수량을 계산합니다.</p></div></div>
+                <div class="col-md-6" onclick="showPage('worklog', document.querySelectorAll('.nav-link')[1])">
+                    <div class="p-4 bg-dark border border-secondary border-opacity-25 rounded-4 shadow-sm h-100 cursor-pointer" style="transition:0.3s;">
+                        <i class="bi bi-pencil-square fs-1 text-primary mb-3"></i>
+                        <h3>작업일보 작성</h3>
+                        <p class="text-secondary m-0">공수 기록 및 엑셀 출력을 진행합니다.</p>
+                    </div>
+                </div>
+                <div class="col-md-6" onclick="showPage('t5', document.querySelectorAll('.nav-link')[2])">
+                    <div class="p-4 bg-dark border border-secondary border-opacity-25 rounded-4 shadow-sm h-100 cursor-pointer" style="transition:0.3s;">
+                        <i class="bi bi-lightbulb fs-1 text-warning mb-3"></i>
+                        <h3>T5 물량 산출</h3>
+                        <p class="text-secondary m-0">조명 길이에 따른 최적 수량을 계산합니다.</p>
+                    </div>
+                </div>
             </div>
         </section>
 
         <section id="page-worklog" class="page-section">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="fw-bold m-0">실전 작업일보</h2>
-                <button onclick="addTeam()" class="btn btn-outline-primary btn-sm">+ 공정 추가</button>
+                <button onclick="addTeam()" class="btn btn-outline-primary">+ 공정 추가</button>
             </div>
             <div class="row g-2 mb-4">
-                <div class="col-5"><input type="month" id="logMonth" class="form-control bg-dark text-white border-secondary"></div>
-                <div class="col-7"><input type="text" id="siteName" class="form-control bg-dark text-white border-secondary" placeholder="현장명 입력"></div>
+                <div class="col-md-4"><input type="month" id="logMonth" class="form-control bg-dark text-white border-secondary"></div>
+                <div class="col-md-8"><input type="text" id="siteName" class="form-control bg-dark text-white border-secondary" placeholder="현장명을 입력하세요"></div>
             </div>
             <div id="team-container"></div>
-            <button class="btn btn-success w-100 mt-4 mb-5 fw-bold" onclick="saveMonthlyLog()">현장 데이터 최종 저장 💾</button>
-            <hr class="border-secondary opacity-25">
-            <h4 class="fw-bold mt-5 mb-3">📂 저장된 기록</h4>
-            <div id="history-list"></div>
+            <button class="btn btn-success w-100 mt-4 mb-5 fw-bold py-3 shadow" onclick="saveMonthlyLog()">현장 데이터 최종 저장 💾</button>
+            <h4 class="fw-bold mt-5 mb-4"><i class="bi bi-archive me-2"></i>최근 저장 기록</h4>
+            <div id="history-list" class="row g-3"></div>
         </section>
 
-        <section id="page-t5" class="page-section text-center">
-            <h2 class="fw-bold mb-4">T5 조명 계산기</h2>
-            <div class="alert alert-info bg-dark text-info border-info border-opacity-25">업데이트 중입니다. 기존 T5 기능을 여기에 통합할 예정입니다.</div>
+        <section id="page-t5" class="page-section">
+            <h2 class="fw-bold mb-4">T5 조명 물량 계산기</h2>
+            <div class="calc-card">
+                <label class="form-label text-secondary small">총 설치 길이 (mm)</label>
+                <div class="input-group mb-4">
+                    <input type="number" id="t5-length" class="form-control bg-dark text-white border-secondary py-3" placeholder="예: 4500">
+                    <button class="btn btn-primary px-4" onclick="calcT5()">계산하기</button>
+                </div>
+                <div id="t5-result" style="display:none;">
+                    <h5 class="fw-bold text-info mb-3">최적 조합 결과</h5>
+                    <div id="t5-list"></div>
+                    <div class="mt-3 p-3 bg-primary bg-opacity-10 rounded-3">
+                        <small class="text-secondary">총 실제 길이: </small><b id="t5-total-mm" class="text-white"></b><br>
+                        <small class="text-secondary">남는 공간: </small><b id="t5-gap" class="text-warning"></b>
+                    </div>
+                </div>
+            </div>
         </section>
-
     </main>
 </div>
 
 <script>
-    /* [인증 및 페이지 제어 로직] */
     let myEmail, myTeamId, editingId = null, userNickname = "관리자";
     let isLoginMode = true;
     let teamData = [{ teamName: "목공팀", workers: [] }];
 
+    // [페이지 전환]
+    function showPage(pageId, el) {
+        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    // [인증 로직]
     auth.onAuthStateChanged(async user => {
         if (user) {
             myEmail = user.email;
@@ -167,28 +186,38 @@
             document.getElementById('userNickDisplay').innerText = userNickname;
             document.getElementById('welcomeMsg').innerText = `${userNickname}님, 반갑습니다!`;
             await findTeam(); loadHistory(); renderAllTeams();
-        } else {
-            document.getElementById('auth-overlay').style.display = 'flex';
-        }
+        } else { document.getElementById('auth-overlay').style.display = 'flex'; }
     });
-
-    function showPage(pageId, el) {
-        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + pageId).classList.add('active');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        el.classList.add('active');
-    }
 
     async function findTeam() {
         const q = await db.collection("teams").where("members", "array-contains", myEmail).get();
-        if (!q.empty) { myTeamId = q.docs[0].id; }
+        if (!q.empty) myTeamId = q.docs[0].id;
     }
 
-    /* [작업일보 핵심 로직 - 기존과 100% 동일] */
+    function toggleAuthMode() {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "현장 관리 접속" : "회원가입 시작";
+        document.getElementById('userNick').style.display = isLoginMode ? "none" : "block";
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById('userEmail').value.trim(), pw = document.getElementById('userPw').value.trim(), nick = document.getElementById('userNick').value.trim();
+        if(!email || !pw) return alert("입력 정보 부족");
+        try {
+            if(isLoginMode) await auth.signInWithEmailAndPassword(email, pw);
+            else { await auth.createUserWithEmailAndPassword(email, pw); await db.collection("users").doc(email).set({ nickname: nick, email, createdAt: Date.now() }); }
+        } catch(e) { alert(e.message); }
+    }
+
+    async function handleLogout() { if(confirm("로그아웃 하시겠습니까?")) { await auth.signOut(); location.reload(); } }
+
+    // [작업일보 핵심 로직]
     function renderAllTeams() {
         const container = document.getElementById('team-container');
-        const [year, month] = (document.getElementById('logMonth').value || "2026-04").split('-').map(Number);
+        const monthVal = document.getElementById('logMonth').value || "2026-04";
+        const [year, month] = monthVal.split('-').map(Number);
         const lastDay = new Date(year, month, 0).getDate();
+        
         container.innerHTML = teamData.map((team, tIdx) => {
             let teamTotal = 0;
             const tables = team.workers.map((w, wIdx) => {
@@ -197,13 +226,13 @@
                 teamTotal += pSum;
                 return `
                 <table class="excel-table">
-                    <tr class="date-row"><td rowspan="4" class="name-cell">${w.name}<br><button onclick="removeWorker(${tIdx}, ${wIdx})" class="btn btn-danger btn-xs py-0 px-1 mt-1" style="font-size:0.6rem;">삭제</button></td>${loopDays(year, month, 1, 16, 'date')}</tr>
+                    <tr class="date-row"><td rowspan="4" class="name-cell">${w.name}<br><button onclick="removeWorker(${tIdx}, ${wIdx})" class="btn btn-danger btn-sm p-0 px-1 mt-1" style="font-size:0.6rem;">삭제</button></td>${loopDays(year, month, 1, 16, 'date')}</tr>
                     <tr>${loopDays(year, month, 1, 16, 'input', tIdx, wIdx)}</tr>
                     <tr class="date-row">${loopDays(year, month, 17, 31, 'date', 0, 0, lastDay)}<td style="background:#1a202c;">계</td></tr>
                     <tr>${loopDays(year, month, 17, 31, 'input', tIdx, wIdx, lastDay)}<td class="fw-bold text-primary">${pSum % 1 === 0 ? pSum : pSum.toFixed(1)}</td></tr>
                 </table>`;
             }).join('');
-            return `<div class="mb-4"><div class="d-flex justify-content-between align-items-center mb-2"><h5 class="m-0 fw-bold text-info">${team.teamName}</h5><button onclick="addWorker(${tIdx})" class="btn btn-outline-info btn-xs py-0 px-2">+</button></div>${tables}<div class="text-end small text-secondary">소계: ${teamTotal.toFixed(1)}</div></div>`;
+            return `<div class="mb-5"><div class="d-flex justify-content-between align-items-center mb-2"><h5 class="m-0 fw-bold text-info">${team.teamName}</h5><button onclick="addWorker(${tIdx})" class="btn btn-outline-info btn-sm">+</button></div>${tables}<div class="text-end small text-secondary">공정 소계: <b>${teamTotal.toFixed(1)}</b></div></div>`;
         }).join('');
         bindLongPress();
     }
@@ -227,7 +256,8 @@
 
     function handleCellClick(el) {
         const { t, w, d } = el.dataset;
-        teamData[t].workers[w].days[d] = (teamData[t].workers[w].days[d] == 1 ? "" : 1);
+        const current = parseFloat(teamData[t].workers[w].days[d] || 0);
+        teamData[t].workers[w].days[d] = (current === 1 ? "" : 1);
         renderAllTeams();
     }
 
@@ -236,39 +266,110 @@
             let timer;
             cell.onmousedown = cell.ontouchstart = () => timer = setTimeout(() => {
                 const { t, w, d } = cell.dataset;
-                const input = prompt("공수 직접 입력", teamData[t].workers[w].days[d]);
+                const input = prompt(`${teamData[t].workers[w].name} - ${d}일 공수 입력`, teamData[t].workers[w].days[d]);
                 if (input !== null) { teamData[t].workers[w].days[d] = input; renderAllTeams(); }
             }, 700);
             cell.onmouseup = cell.ontouchend = () => clearTimeout(timer);
         });
     }
 
+    function addTeam() { const n = prompt("공정명 입력"); if(n) { teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
+    function addWorker(tIdx) { const n = prompt("성함 입력"); if(n) { teamData[tIdx].workers.push({name:n, days:{}}); renderAllTeams(); } }
+    function removeWorker(tIdx, wIdx) { if(confirm("삭제?")) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); } }
+
     async function saveMonthlyLog() {
-        const month = document.getElementById('logMonth').value;
-        const site = document.getElementById('siteName').value.trim();
-        if(!site) return alert("현장명을 입력하세요.");
-        await db.collection("monthly_logs").add({ teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: userNickname });
-        alert("저장되었습니다!"); location.reload();
+        const month = document.getElementById('logMonth').value, site = document.getElementById('siteName').value.trim();
+        if(!site) return alert("현장명 필수!");
+        const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: userNickname };
+        if(editingId) await db.collection("monthly_logs").doc(editingId).set(data);
+        else await db.collection("monthly_logs").add(data);
+        alert("성공적으로 저장되었습니다."); location.reload();
     }
 
     function loadHistory() {
         db.collection("monthly_logs").where("teamId","==", myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => {
             document.getElementById('history-list').innerHTML = ss.docs.map(doc => {
                 const d = doc.data();
-                return `<div class="p-3 bg-dark border border-secondary border-opacity-25 rounded-3 mb-2 d-flex justify-content-between align-items-center">
-                    <div><small class="text-primary">${d.month}</small><br><b>${d.site}</b></div>
-                    <button class="btn btn-success btn-sm" onclick="exportToExcel('${doc.id}')">엑셀</button>
+                return `
+                <div class="col-md-6">
+                    <div class="p-3 bg-dark border border-secondary border-opacity-25 rounded-3 d-flex justify-content-between align-items-center">
+                        <div><small class="text-primary">${d.month}</small><br><b>${d.site}</b></div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-light btn-sm" onclick="editLog('${doc.id}')">수정</button>
+                            <button class="btn btn-success btn-sm" onclick="exportToExcel('${doc.id}')">엑셀</button>
+                        </div>
+                    </div>
                 </div>`;
-            }).join('');
+            }).join('') || "저장 기록 없음";
         });
     }
 
-    // [인증 관련]
-    function toggleAuthMode() { isLoginMode = !isLoginMode; document.getElementById('auth-title').innerText = isLoginMode ? "현장 관리 접속" : "회원가입 시작"; document.getElementById('userNick').style.display = isLoginMode ? "none" : "block"; }
-    async function handleAuth() { /* 이메일/PW 로그인 로직 그대로 사용 */ }
-    async function handleLogout() { if(confirm("로그아웃 하시겠습니까?")) await auth.signOut(); }
+    async function editLog(id) {
+        const doc = await db.collection("monthly_logs").doc(id).get();
+        const d = doc.data(); editingId = id;
+        document.getElementById('logMonth').value = d.month;
+        document.getElementById('siteName').value = d.site;
+        teamData = d.teamData; showPage('worklog', document.querySelectorAll('.nav-link')[1]); renderAllTeams();
+    }
+
+    // [T5 계산기 실전 로직]
+    function calcT5() {
+        const total = parseInt(document.getElementById('t5-length').value);
+        if(!total) return alert("길이를 입력하세요.");
+        
+        let lengths = [1200, 900, 600, 300], result = {}, remain = total;
+        lengths.forEach(l => { result[l] = Math.floor(remain / l); remain %= l; });
+
+        let html = "", realTotal = 0;
+        lengths.forEach(l => {
+            if(result[l] > 0) {
+                html += `<div class="calc-result-item"><span>${l}mm</span><b>${result[l]}개</b></div>`;
+                realTotal += (l * result[l]);
+            }
+        });
+
+        document.getElementById('t5-list').innerHTML = html;
+        document.getElementById('t5-total-mm').innerText = realTotal + " mm";
+        document.getElementById('t5-gap').innerText = (total - realTotal) + " mm 부족";
+        document.getElementById('t5-result').style.display = 'block';
+    }
+
+    // [엑셀 수출 로직 - 준호님 양식 최적화]
+    async function exportToExcel(id) {
+        const doc = await db.collection("monthly_logs").doc(id).get();
+        const d_raw = doc.data();
+        const [year, monthNum] = d_raw.month.split('-');
+        const lastDayNum = new Date(year, monthNum, 0).getDate();
+        const wb = XLSX.utils.book_new();
+        const wsData = Array.from({ length: 5 }, () => Array(36).fill(""));
+
+        wsData[0][0] = `${year}년 ${monthNum}월 현장 작업 일보 (김목수이야기)`;
+        wsData[1][0] = `현장명: ${d_raw.site}`;
+        wsData[1][12] = `기간: ${year}.${monthNum}.01 ~ ${monthNum}.${lastDayNum}`;
+        wsData[1][30] = `작성자: ${d_raw.writer || "관리자"}`;
+        wsData[3] = ["NO", "공정", "이 름", ...Array.from({length:31},(_,i)=>i+1), "계", "비고"];
+
+        let curR = 5, totalNo = 1;
+        d_raw.teamData.forEach(team => {
+            let startR = curR + 1;
+            team.workers.forEach(w => {
+                const row = [totalNo++, team.teamName, w.name, ...Array.from({length:31},(_,i)=>parseFloat(w.days[i+1]||0)|| ""), {t:'n', f:`SUM(D${curR+1}:AH${curR+1})`}];
+                wsData.push(row); curR++;
+            });
+            wsData.push(["", team.teamName, "공정소계", ...Array(31).fill(""), {t:'n', f:`SUM(AI${startR}:AI${curR})`}]);
+            curR += 2; wsData.push(Array(36).fill(""));
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:35}}, {s:{r:1,c:0},e:{r:1,c:11}}, {s:{r:1,c:12},e:{r:1,c:29}}, {s:{r:1,c:30},e:{r:1,c:35}}];
+        ws['!cols'] = [{wch:4.5},{wch:11},{wch:11},...Array(31).fill({wch:2.2}),{wch:7},{wch:10}];
+        ws['!rows'] = [{hpt:55},{hpt:25},{hpt:12},{hpt:25},{hpt:12}];
+        XLSX.utils.book_append_sheet(wb, ws, "근무현황");
+        XLSX.writeFile(wb, `${d_raw.site}_${monthNum}월_${d_raw.writer}.xlsx`);
+    }
 
     document.getElementById('logMonth').onchange = renderAllTeams;
+    document.getElementById('logMonth').value = new Date().toISOString().substring(0, 7);
 </script>
 </body>
 </html>
