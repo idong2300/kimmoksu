@@ -6,6 +6,8 @@
     
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e222d">
     <meta property="og:title" content="김목수이야기 - All-in-One">
     <meta property="og:image" content="og-image.png">
 
@@ -33,7 +35,6 @@
 
         .app-wrapper { display: flex; height: 100vh; height: 100dvh; width: 100vw; position: relative; }
         
-        /* 사이드바 */
         .sidebar { width: 260px; height: 100dvh; background-color: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; overflow-y: auto; }
         
         .main-container { flex: 1; overflow-y: auto; background-color: var(--bg-deep); padding-bottom: 50px; }
@@ -46,7 +47,6 @@
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 모바일 대응 */
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1040; backdrop-filter: blur(2px); transition: 0.3s; opacity: 0; }
         .sidebar-overlay.active { display: block; opacity: 1; }
         
@@ -60,7 +60,6 @@
         .mobile-menu-btn { display: none; position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-accent); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1030; border: none; font-size: 1.8rem; cursor: pointer; transition: 0.2s; }
         .mobile-menu-btn:active { transform: scale(0.9); }
 
-        /* T5 스타일 */
         .t5-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .t5-input-dark { background: #1e222d !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .t5-input-dark:focus { border-color: var(--primary-accent) !important; box-shadow: none !important; }
@@ -77,7 +76,7 @@
         /* 작업일보 스타일 */
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card-bg); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
         .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; color: white; padding: 0; }
-        .date-row td { height: 22px !important; background: #1e222d; font-size: 0.75rem; color: #94a3b8; }
+        .date-row td { height: 22px !important; background: #1e222d; font-size: 0.75rem; color: #94a3b8; font-weight: bold; }
         .name-cell { width: 75px; background: #181b24 !important; font-weight: bold; }
         
         .name-input { width: 90%; background: transparent; border: none; color: white; text-align: center; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 2px; }
@@ -90,17 +89,7 @@
         .g-red { background: rgba(239, 68, 68, 0.2) !important; color: #ef4444 !important; }
 
         #auth-overlay { position: fixed; inset: 0; background: var(--bg-deep); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; 
-                    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e222d">
-
-<script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(function(error) {
-            console.log('서비스 워커 등록 실패:', error);
-        });
-    }
-</script>
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; }
     </style>
 </head>
 <body>
@@ -235,7 +224,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(function(error) {
+            console.log('서비스 워커 등록 실패:', error);
+        });
+    }
+</script>
 <script>
     let myEmail, myTeamId, editingId = null, userNickname = "관리자";
     let isLoginMode = true;
@@ -302,7 +297,35 @@
         bindLongPress();
     }
     
-    function loopDays(y, m, start, end, type, tIdx, wIdx, lastDay = 31) { let html = ""; for (let d = start; d <= end; d++) { const isInvalid = d > lastDay; if (type === 'date') html += `<td>${isInvalid ? '' : d}</td>`; else { if (isInvalid) html += `<td style="background:#131722;"></td>`; else { const val = teamData[tIdx].workers[wIdx].days[d] || ""; let c = ""; if(val) { const n=parseFloat(val); c = n>2?"g-red":n>1?"g-yellow":"g-green"; } html += `<td class="gongsu-cell ${c}" data-t="${tIdx}" data-w="${wIdx}" data-d="${d}" onclick="handleCellClick(this)">${val}</td>`; } } } return html; }
+    // [수정됨] 요일을 계산하여 토요일은 파란색, 일요일은 빨간색으로 표시하도록 변경
+    function loopDays(y, m, start, end, type, tIdx, wIdx, lastDay = 31) { 
+        let html = ""; 
+        for (let d = start; d <= end; d++) { 
+            const isInvalid = d > lastDay; 
+            if (type === 'date') {
+                if (isInvalid) {
+                    html += `<td></td>`;
+                } else {
+                    const dateObj = new Date(y, m - 1, d);
+                    const dayOfWeek = dateObj.getDay();
+                    let colorStyle = "";
+                    if (dayOfWeek === 0) colorStyle = "color: #ef4444;"; // 일요일 (빨강)
+                    else if (dayOfWeek === 6) colorStyle = "color: #5c7cfa;"; // 토요일 (파랑)
+                    
+                    html += `<td style="${colorStyle}">${d}</td>`;
+                }
+            } else { 
+                if (isInvalid) html += `<td style="background:#131722;"></td>`; 
+                else { 
+                    const val = teamData[tIdx].workers[wIdx].days[d] || ""; 
+                    let c = ""; if(val) { const n=parseFloat(val); c = n>2?"g-red":n>1?"g-yellow":"g-green"; } 
+                    html += `<td class="gongsu-cell ${c}" data-t="${tIdx}" data-w="${wIdx}" data-d="${d}" onclick="handleCellClick(this)">${val}</td>`; 
+                } 
+            } 
+        } 
+        return html; 
+    }
+
     function handleCellClick(el) { const { t, w, d } = el.dataset; teamData[t].workers[w].days[d] = (teamData[t].workers[w].days[d] == 1 ? "" : 1); renderAllTeams(); }
     function bindLongPress() { document.querySelectorAll('.gongsu-cell').forEach(cell => { let timer; cell.onmousedown = cell.ontouchstart = () => timer = setTimeout(() => { const { t, w, d } = cell.dataset; const input = prompt(`${teamData[t].workers[w].name || '작업자'} - ${d}일 공수 입력`, teamData[t].workers[w].days[d]); if (input !== null) { teamData[t].workers[w].days[d] = input; renderAllTeams(); } }, 700); cell.onmouseup = cell.ontouchend = () => clearTimeout(timer); }); }
     function addTeam() { const n = prompt("공정명 입력"); if(n) { teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
@@ -382,7 +405,6 @@
 
         if(totalLength === 0) return alert("길이를 입력하세요.");
 
-        // 현재 설정된 모든 규격(기본+신규) 가져와서 실치수 순으로 정렬
         let specElements = document.querySelectorAll('.spec-actual');
         let specs = [];
         specElements.forEach(el => {
@@ -399,7 +421,6 @@
         });
 
         let resultArr = [];
-        // 출력은 공칭 치수(명칭)로 출력
         specs.forEach(spec => { 
             if(result[spec.nominal] > 0) resultArr.push(`${spec.nominal} - ${result[spec.nominal]}개`); 
         });
@@ -437,7 +458,9 @@
     // [엑셀 출력]
     async function exportToExcel(id) { const doc = await db.collection("monthly_logs").doc(id).get(); const d_raw = doc.data(); const [year, monthNum] = d_raw.month.split('-'); const lastDayNum = new Date(year, monthNum, 0).getDate(); const wb = XLSX.utils.book_new(); const wsData = Array.from({ length: 5 }, () => Array(36).fill("")); wsData[0][0] = `${year}년 ${monthNum}월 현장 작업 일보 (김목수이야기)`; wsData[1][0] = `현장명: ${d_raw.site}`; wsData[1][12] = `기간: ${year}.${monthNum}.01 ~ ${monthNum}.${lastDayNum}`; wsData[1][30] = `작성자: ${d_raw.writer || "관리자"}`; wsData[3] = ["NO", "공정", "이 름", ...Array.from({length:31},(_,i)=>i+1), "계", "비고"]; let curR = 5, totalNo = 1; d_raw.teamData.forEach(team => { let startR = curR + 1; team.workers.forEach(w => { const row = [totalNo++, team.teamName, w.name, ...Array.from({length:31},(_,i)=>parseFloat(w.days[i+1]||0)|| ""), {t:'n', f:`SUM(D${curR+1}:AH${curR+1})`}]; wsData.push(row); curR++; }); wsData.push(["", team.teamName, "공정소계", ...Array(31).fill(""), {t:'n', f:`SUM(AI${startR}:AI${curR})`}]); curR += 2; wsData.push(Array(36).fill("")); }); const ws = XLSX.utils.aoa_to_sheet(wsData); ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:35}}, {s:{r:1,c:0},e:{r:1,c:11}}, {s:{r:1,c:12},e:{r:1,c:29}}, {s:{r:1,c:30},e:{r:1,c:35}}]; ws['!cols'] = [{wch:4.5},{wch:11},{wch:11},...Array(31).fill({wch:2.2}),{wch:7},{wch:10}]; ws['!rows'] = [{hpt:55},{hpt:25},{hpt:12},{hpt:25},{hpt:12}]; XLSX.utils.book_append_sheet(wb, ws, "근무현황"); XLSX.writeFile(wb, `${d_raw.site}_${monthNum}월_${d_raw.writer}.xlsx`); }
     
-    document.getElementById('logMonth').onchange = renderAllTeams; document.getElementById('logMonth').value = new Date().toISOString().substring(0, 7);
+    // 달 변경 시 다시 렌더링되도록 이벤트 바인딩
+    document.getElementById('logMonth').onchange = renderAllTeams; 
+    document.getElementById('logMonth').value = new Date().toISOString().substring(0, 7);
 </script>
 </body>
 </html>
