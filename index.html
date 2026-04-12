@@ -33,7 +33,7 @@
 
         .app-wrapper { display: flex; height: 100vh; height: 100dvh; width: 100vw; position: relative; }
         
-        /* 사이드바 기본 세팅 (PC) - 스크롤 기능 추가 */
+        /* 사이드바 */
         .sidebar { width: 260px; height: 100dvh; background-color: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; overflow-y: auto; }
         
         .main-container { flex: 1; overflow-y: auto; background-color: var(--bg-deep); padding-bottom: 50px; }
@@ -46,7 +46,7 @@
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 모바일 대응 (사이드바 숨김 & 오버레이) */
+        /* 모바일 대응 */
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1040; backdrop-filter: blur(2px); transition: 0.3s; opacity: 0; }
         .sidebar-overlay.active { display: block; opacity: 1; }
         
@@ -60,12 +60,10 @@
         .mobile-menu-btn { display: none; position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-accent); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1030; border: none; font-size: 1.8rem; cursor: pointer; transition: 0.2s; }
         .mobile-menu-btn:active { transform: scale(0.9); }
 
-        /* T5 계산기 & 카드 스타일 */
+        /* T5 스타일 */
         .t5-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .t5-input-dark { background: #1e222d !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .t5-input-dark:focus { border-color: var(--primary-accent) !important; box-shadow: none !important; }
-        
-        /* [요청3] Placeholder 가시성 완벽 해결 */
         .t5-input-dark::placeholder { color: #8b95a1 !important; opacity: 1 !important; }
 
         .t5-btn-primary { background: var(--primary-accent); border: none; color: white; border-radius: 10px; padding: 14px; font-weight: bold; width: 100%; transition: 0.2s; }
@@ -75,7 +73,6 @@
         
         .history-card { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 12px; position: relative; }
         .history-author { position: absolute; top: 18px; right: 18px; font-size: 0.8rem; color: #8b95a1; display: flex; align-items: center; }
-        .history-author i { color: #845ef7; margin-right: 4px; }
 
         /* 작업일보 스타일 */
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card-bg); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
@@ -83,7 +80,6 @@
         .date-row td { height: 22px !important; background: #1e222d; font-size: 0.75rem; color: #94a3b8; }
         .name-cell { width: 75px; background: #181b24 !important; font-weight: bold; }
         
-        /* 이름 직접 입력용 인풋 스타일 */
         .name-input { width: 90%; background: transparent; border: none; color: white; text-align: center; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 2px; }
         .name-input:focus { outline: none; border-bottom-color: var(--primary-accent); }
         .name-input::placeholder { color: #4b5563; font-weight: normal; }
@@ -183,15 +179,19 @@
             
             <div class="t5-card mb-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold m-0">제품 규격 설정</h6>
-                    <button class="t5-btn-small rounded-circle px-2" onclick="toggleT5Specs()"><i class="bi bi-plus-lg"></i></button>
+                    <h6 class="fw-bold m-0">제품 규격 설정 <span class="badge bg-secondary ms-2 fw-normal">실제 치수 보정</span></h6>
+                    <button class="t5-btn-small rounded-circle px-2" onclick="toggleT5Specs()"><i class="bi bi-gear"></i></button>
                 </div>
                 <div id="t5-spec-container" style="display:none;" class="mt-3 pt-3 border-top border-secondary border-opacity-25">
-                    <div class="row g-2">
-                        <div class="col-3"><label class="small text-secondary mb-1">1200용</label><input type="number" id="spec-l" class="form-control t5-input-dark text-center p-1 fs-6" value="1200"></div>
-                        <div class="col-3"><label class="small text-secondary mb-1">900용</label><input type="number" id="spec-m" class="form-control t5-input-dark text-center p-1 fs-6" value="900"></div>
-                        <div class="col-3"><label class="small text-secondary mb-1">600용</label><input type="number" id="spec-s" class="form-control t5-input-dark text-center p-1 fs-6" value="600"></div>
-                        <div class="col-3"><label class="small text-secondary mb-1">300용</label><input type="number" id="spec-xs" class="form-control t5-input-dark text-center p-1 fs-6" value="300"></div>
+                    <div class="row g-2" id="t5-spec-list">
+                        <div class="col-4 col-md-auto spec-item position-relative"><label class="small text-secondary mb-1">1200용</label><input type="number" class="form-control t5-input-dark text-center p-1 fs-6 spec-actual" data-nominal="1200" value="1190"></div>
+                        <div class="col-4 col-md-auto spec-item position-relative"><label class="small text-secondary mb-1">900용</label><input type="number" class="form-control t5-input-dark text-center p-1 fs-6 spec-actual" data-nominal="900" value="890"></div>
+                        <div class="col-4 col-md-auto spec-item position-relative"><label class="small text-secondary mb-1">600용</label><input type="number" class="form-control t5-input-dark text-center p-1 fs-6 spec-actual" data-nominal="600" value="590"></div>
+                        <div class="col-4 col-md-auto spec-item position-relative"><label class="small text-secondary mb-1">400용</label><input type="number" class="form-control t5-input-dark text-center p-1 fs-6 spec-actual" data-nominal="400" value="385"></div>
+                        <div class="col-4 col-md-auto spec-item position-relative"><label class="small text-secondary mb-1">300용</label><input type="number" class="form-control t5-input-dark text-center p-1 fs-6 spec-actual" data-nominal="300" value="300"></div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <button class="t5-btn-small border border-secondary" onclick="addNewSpec()">+ 신규 규격 추가</button>
                     </div>
                 </div>
             </div>
@@ -282,7 +282,6 @@
             let teamTotal = 0;
             const tables = team.workers.map((w, wIdx) => {
                 let pSum = 0; Object.values(w.days).forEach(v => pSum += parseFloat(v || 0)); teamTotal += pSum;
-                // [요청1 해결] 인원 추가 시 표 먼저 생성 & 이름 입력칸(input) 삽입
                 return `<table class="excel-table"><tr class="date-row"><td rowspan="4" class="name-cell">
                     <input type="text" class="name-input" value="${w.name}" onchange="updateWorkerName(${tIdx}, ${wIdx}, this.value)" placeholder="이름입력"><br>
                     <button onclick="removeWorker(${tIdx}, ${wIdx})" class="btn btn-danger btn-sm p-0 px-2 mt-2" style="font-size:0.6rem;">삭제</button>
@@ -298,10 +297,8 @@
     function bindLongPress() { document.querySelectorAll('.gongsu-cell').forEach(cell => { let timer; cell.onmousedown = cell.ontouchstart = () => timer = setTimeout(() => { const { t, w, d } = cell.dataset; const input = prompt(`${teamData[t].workers[w].name || '작업자'} - ${d}일 공수 입력`, teamData[t].workers[w].days[d]); if (input !== null) { teamData[t].workers[w].days[d] = input; renderAllTeams(); } }, 700); cell.onmouseup = cell.ontouchend = () => clearTimeout(timer); }); }
     function addTeam() { const n = prompt("공정명 입력"); if(n) { teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
     
-    // [요청1 해결] 이름 묻는 prompt 제거, 바로 표 생성
     function addWorker(tIdx) { teamData[tIdx].workers.push({name:"", days:{}}); renderAllTeams(); }
     function updateWorkerName(tIdx, wIdx, val) { teamData[tIdx].workers[wIdx].name = val; }
-    
     function removeWorker(tIdx, wIdx) { if(confirm("삭제할까요?")) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); } }
     
     async function saveMonthlyLog() { const month = document.getElementById('logMonth').value, site = document.getElementById('siteName').value.trim(); if(!site) return alert("현장명 필수!"); const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).set(data); else await db.collection("monthly_logs").add(data); alert("저장 완료"); location.reload(); }
@@ -334,16 +331,32 @@
         alert("데이터를 복사했습니다! 현장명을 바꾸고 저장해주세요.");
     }
 
-    // [요청2 해결] T5 규격 토글 기능
+    // [T5 계산기 & 규격 편집 로직]
     function toggleT5Specs() {
         const el = document.getElementById('t5-spec-container');
         el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
 
+    function addNewSpec() {
+        let nominal = prompt("신규 규격 명칭을 입력하세요. (예: 1500, 200)");
+        if(!nominal) return;
+        let actual = prompt(nominal + "용의 실제 치수(mm)를 입력하세요. (예: 1490)");
+        if(!actual) return;
+
+        let div = document.createElement('div');
+        div.className = "col-4 col-md-auto spec-item position-relative";
+        div.innerHTML = `
+            <label class="small text-secondary mb-1">${nominal}용</label>
+            <input type="number" class="form-control t5-input-dark text-center p-1 fs-6 spec-actual" data-nominal="${nominal}" value="${actual}">
+            <button class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0" style="width:20px;height:20px;font-size:10px;transform:translate(20%, -20%);" onclick="this.parentElement.remove()">X</button>
+        `;
+        document.getElementById('t5-spec-list').appendChild(div);
+    }
+
     function addT5Row() {
         const div = document.createElement('div');
         div.className = "row g-2 mb-2 t5-row-item";
-        div.innerHTML = `<div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간 (예: 거실)"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이"></div>`;
+        div.innerHTML = `<div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간 (예: 거실)"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이 (예: 4500)"></div>`;
         document.getElementById('t5-input-container').appendChild(div);
     }
 
@@ -359,23 +372,28 @@
 
         if(totalLength === 0) return alert("길이를 입력하세요.");
 
-        // [요청2 해결] 입력된 커스텀 규격값 가져오기
-        let customSpecs = [
-            parseInt(document.getElementById('spec-l').value) || 1200,
-            parseInt(document.getElementById('spec-m').value) || 900,
-            parseInt(document.getElementById('spec-s').value) || 600,
-            parseInt(document.getElementById('spec-xs').value) || 300
-        ];
-
-        // 크기순으로 정렬 (에러 방지)
-        customSpecs.sort((a,b) => b-a);
+        // 현재 설정된 모든 규격(기본+신규) 가져와서 실치수 순으로 정렬
+        let specElements = document.querySelectorAll('.spec-actual');
+        let specs = [];
+        specElements.forEach(el => {
+            let nominal = el.getAttribute('data-nominal');
+            let actual = parseInt(el.value) || parseInt(nominal);
+            specs.push({ nominal: nominal, actual: actual });
+        });
+        specs.sort((a,b) => b.actual - a.actual);
         
         let result = {}, remain = totalLength;
-        customSpecs.forEach(l => { result[l] = Math.floor(remain / l); remain %= l; });
+        specs.forEach(spec => { 
+            result[spec.nominal] = Math.floor(remain / spec.actual); 
+            remain %= spec.actual; 
+        });
 
         let resultArr = [];
-        customSpecs.forEach(l => { if(result[l] > 0) resultArr.push(`${l}-${result[l]}개`); });
-        const resultStr = resultArr.join(', ');
+        // 출력은 공칭 치수(명칭)로 출력
+        specs.forEach(spec => { 
+            if(result[spec.nominal] > 0) resultArr.push(`${spec.nominal} - ${result[spec.nominal]}개`); 
+        });
+        const resultStr = resultArr.join(' / ');
 
         const t5Data = { teamId: myTeamId, siteName: site, resultText: resultStr, writer: userNickname, createdAt: Date.now() };
 
