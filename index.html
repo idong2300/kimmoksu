@@ -19,6 +19,43 @@
     <link rel="stylesheet" href="style.css">
 
     <style>
+        /* 기존 스타일 아래에 이 내용을 추가하거나 수정하세요 */
+
+.menu-item {
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; /* 모서리를 살짝 더 둥글게 */
+    padding: 20px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* POP 효과를 위한 튕김 애니메이션 */
+}
+
+/* 마우스 커서를 올렸을 때 (POP 효과) */
+.menu-item:hover {
+    transform: translateY(-8px) scale(1.05); /* 위로 8px 뜨면서 5% 확대 */
+    background: #334155;
+    border-color: var(--primary);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4); /* 그림자를 깊게 주어 떠 있는 느낌 강조 */
+    z-index: 10;
+}
+
+/* 테스트 버전 버튼은 별도 효과 */
+.menu-item.test-btn:hover {
+    border-color: #fbbf24; /* 노란색 계열로 강조 */
+    box-shadow: 0 15px 30px rgba(251, 191, 36, 0.2);
+}
+
+/* 메인 버튼(접속하기 등)에도 동일한 효과 적용 */
+.btn-main {
+    transition: all 0.3s ease;
+}
+
+.btn-main:hover {
+    transform: scale(1.02);
+    filter: brightness(1.1); /* 살짝 밝게 */
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
         /* 대시보드 및 로그인 화면 디자인 보강 */
         body { background-color: #0f172a; color: white; }
         .card { background: #1e293b; border: 1px solid rgba(255,255,255,0.05); }
