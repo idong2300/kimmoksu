@@ -22,10 +22,10 @@
 
     <style>
         :root {
-            --bg-deep: #131722; /* 사진과 유사한 딥 다크 네이비 */
+            --bg-deep: #131722; 
             --sidebar-bg: #1e222d;
             --card-bg: #2a2e39;
-            --primary-accent: #5c7cfa; /* 사진의 파란색 버튼 색상 */
+            --primary-accent: #5c7cfa; 
             --danger-btn: #e03131;
         }
 
@@ -43,7 +43,7 @@
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* T5 계산기 전용 스타일 (사진 완벽 구현) */
+        /* T5 계산기 & 카드 스타일 */
         .t5-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .t5-input-dark { background: #1e222d !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .t5-input-dark:focus { border-color: var(--primary-accent) !important; box-shadow: none !important; }
@@ -187,7 +187,7 @@
     let myEmail, myTeamId, editingId = null, userNickname = "관리자";
     let isLoginMode = true;
     
-    // [요청3 해결] 기본 4개 팀 세팅
+    // 기본 4개 팀 세팅
     let teamData = [
         { teamName: "목공팀", workers: [] },
         { teamName: "도장팀", workers: [] },
@@ -241,7 +241,7 @@
     function bindLongPress() { document.querySelectorAll('.gongsu-cell').forEach(cell => { let timer; cell.onmousedown = cell.ontouchstart = () => timer = setTimeout(() => { const { t, w, d } = cell.dataset; const input = prompt(`${teamData[t].workers[w].name} - ${d}일 공수 입력`, teamData[t].workers[w].days[d]); if (input !== null) { teamData[t].workers[w].days[d] = input; renderAllTeams(); } }, 700); cell.onmouseup = cell.ontouchend = () => clearTimeout(timer); }); }
     function addTeam() { const n = prompt("공정명 입력"); if(n) { teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
     function addWorker(tIdx) { const n = prompt("성함 입력"); if(n) { teamData[tIdx].workers.push({name:n, days:{}}); renderAllTeams(); } }
-    function removeWorker(tIdx, wIdx) { if(confirm("삭제?")) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); } }
+    function removeWorker(tIdx, wIdx) { if(confirm("삭제할까요?")) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); } }
     
     async function saveMonthlyLog() { const month = document.getElementById('logMonth').value, site = document.getElementById('siteName').value.trim(); if(!site) return alert("현장명 필수!"); const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).set(data); else await db.collection("monthly_logs").add(data); alert("저장 완료"); location.reload(); }
     
@@ -255,26 +255,25 @@
                     <button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>
                 </div>
             </div>
-        </div>`; }).join('') || "기록 없음"; }); 
-    }
+        </div>`; }).join('') || '<p class="text-secondary small ms-2">기록이 없습니다.</p>'; }); 
+    } // <-- 여기가 에러의 원인이었던 곳입니다! 작은따옴표로 완벽 수정 완료
     
     async function editLog(id) { const doc = await db.collection("monthly_logs").doc(id).get(); const d = doc.data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = d.teamData; showPage('worklog', document.querySelectorAll('.nav-link')[1]); renderAllTeams(); window.scrollTo(0,0); }
     
-    // [요청2 해결] 복사 기능 함수 
     async function copyLog(id) {
         const doc = await db.collection("monthly_logs").doc(id).get();
         const d = doc.data();
-        editingId = null; // 새 문서로 저장되도록 null 처리
+        editingId = null; 
         document.getElementById('logMonth').value = d.month;
-        document.getElementById('siteName').value = d.site + " (복사)";
+        document.getElementById('siteName').value = d.site + " (복사본)";
         teamData = d.teamData;
         showPage('worklog', document.querySelectorAll('.nav-link')[1]);
         renderAllTeams();
         window.scrollTo(0,0);
-        alert("데이터가 복사되었습니다. 현장명을 수정하고 저장하세요.");
+        alert("데이터를 복사했습니다! 현장명을 바꾸고 저장해주세요.");
     }
 
-    // [요청1 해결] T5 UI 및 히스토리 로직
+    // [T5 계산기 로직]
     function addT5Row() {
         const div = document.createElement('div');
         div.className = "row g-2 mb-2 t5-row-item";
@@ -283,7 +282,7 @@
     }
 
     async function calculateAndSaveT5() {
-        const site = document.getElementById('t5-site-title').value.trim() || "미지정 현장";
+        const site = document.getElementById('t5-site-title').value.trim() || "미지정 부위";
         const rows = document.querySelectorAll('.t5-row-item');
         let totalLength = 0;
         
@@ -292,18 +291,15 @@
             totalLength += len;
         });
 
-        if(totalLength === 0) return alert("길이를 1개 이상 입력하세요.");
+        if(totalLength === 0) return alert("길이를 입력하세요.");
 
-        // 계산 로직 (1200, 900, 600, 300)
         let lengths = [1200, 900, 600, 300], result = {}, remain = totalLength;
         lengths.forEach(l => { result[l] = Math.floor(remain / l); remain %= l; });
 
-        // 결과 텍스트화 (예: "1200-2개, 900-1개")
         let resultArr = [];
-        lengths.forEach(l => { if(result[l] > 0) resultArr.push(`${l}-${result[l]}개`); });
-        const resultStr = resultArr.join(', ');
+        lengths.forEach(l => { if(result[l] > 0) resultArr.push(`${l} - ${result[l]}개`); });
+        const resultStr = resultArr.join(' / ');
 
-        // Firebase에 히스토리 저장
         const t5Data = {
             teamId: myTeamId,
             siteName: site,
@@ -314,30 +310,26 @@
 
         try {
             await db.collection("t5_logs").add(t5Data);
-            // 폼 초기화
             document.getElementById('t5-site-title').value = '';
             document.getElementById('t5-input-container').innerHTML = `<div class="row g-2 mb-2 t5-row-item"><div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간 (예: 거실)"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이"></div></div>`;
-            alert("산출 완료 및 히스토리에 저장되었습니다.");
+            alert("산출 완료! 히스토리에 자동 등록되었습니다.");
         } catch(e) { alert("저장 실패: " + e.message); }
     }
 
-    // T5 히스토리 불러오기 (사진과 동일한 UI)
     function loadT5History() {
         db.collection("t5_logs").where("teamId","==", myTeamId).orderBy("createdAt","desc").limit(20).onSnapshot(ss => {
             document.getElementById('t5-history-list').innerHTML = ss.docs.map(doc => {
                 const d = doc.data();
-                // 사진 UI: 상단 현장명 & 작성자 아이콘 / 하단 계산결과 / 버튼들
                 return `
                 <div class="history-card">
                     <div class="history-author"><i class="bi bi-person-fill"></i> ${d.writer}</div>
-                    <h6 class="fw-bold text-white mb-1">${d.siteName}</h6>
+                    <h6 class="fw-bold text-white mb-2">${d.siteName}</h6>
                     <p class="text-secondary small mb-3">${d.resultText}</p>
                     <div class="d-flex gap-2">
-                        <button class="t5-btn-primary py-2 fs-6 rounded-3" style="flex:1;" onclick="alert('수정 기능 준비중')">수정</button>
-                        <button class="t5-btn-primary py-2 fs-6 rounded-3" style="flex:1; background:var(--danger-btn);" onclick="deleteT5Log('${doc.id}')">삭제</button>
+                        <button class="t5-btn-primary py-2 fs-6 rounded-3" style="flex:1; background:var(--danger-btn);" onclick="deleteT5Log('${doc.id}')">내역 삭제</button>
                     </div>
                 </div>`;
-            }).join('') || "<p class="text-secondary small">저장된 내역이 없습니다.</p>";
+            }).join('') || '<p class="text-secondary small ms-2">저장된 T5 산출 내역이 없습니다.</p>'; // <-- 여기도 확실하게 작은따옴표로 처리!
         });
     }
 
@@ -345,7 +337,9 @@
 
     // [엑셀 출력]
     async function exportToExcel(id) { const doc = await db.collection("monthly_logs").doc(id).get(); const d_raw = doc.data(); const [year, monthNum] = d_raw.month.split('-'); const lastDayNum = new Date(year, monthNum, 0).getDate(); const wb = XLSX.utils.book_new(); const wsData = Array.from({ length: 5 }, () => Array(36).fill("")); wsData[0][0] = `${year}년 ${monthNum}월 현장 작업 일보 (김목수이야기)`; wsData[1][0] = `현장명: ${d_raw.site}`; wsData[1][12] = `기간: ${year}.${monthNum}.01 ~ ${monthNum}.${lastDayNum}`; wsData[1][30] = `작성자: ${d_raw.writer || "관리자"}`; wsData[3] = ["NO", "공정", "이 름", ...Array.from({length:31},(_,i)=>i+1), "계", "비고"]; let curR = 5, totalNo = 1; d_raw.teamData.forEach(team => { let startR = curR + 1; team.workers.forEach(w => { const row = [totalNo++, team.teamName, w.name, ...Array.from({length:31},(_,i)=>parseFloat(w.days[i+1]||0)|| ""), {t:'n', f:`SUM(D${curR+1}:AH${curR+1})`}]; wsData.push(row); curR++; }); wsData.push(["", team.teamName, "공정소계", ...Array(31).fill(""), {t:'n', f:`SUM(AI${startR}:AI${curR})`}]); curR += 2; wsData.push(Array(36).fill("")); }); const ws = XLSX.utils.aoa_to_sheet(wsData); ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:35}}, {s:{r:1,c:0},e:{r:1,c:11}}, {s:{r:1,c:12},e:{r:1,c:29}}, {s:{r:1,c:30},e:{r:1,c:35}}]; ws['!cols'] = [{wch:4.5},{wch:11},{wch:11},...Array(31).fill({wch:2.2}),{wch:7},{wch:10}]; ws['!rows'] = [{hpt:55},{hpt:25},{hpt:12},{hpt:25},{hpt:12}]; XLSX.utils.book_append_sheet(wb, ws, "근무현황"); XLSX.writeFile(wb, `${d_raw.site}_${monthNum}월_${d_raw.writer}.xlsx`); }
+    
     document.getElementById('logMonth').onchange = renderAllTeams; document.getElementById('logMonth').value = new Date().toISOString().substring(0, 7);
 </script>
 </body>
 </html>
+
