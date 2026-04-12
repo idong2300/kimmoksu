@@ -36,6 +36,7 @@
 
         .app-wrapper { display: flex; height: 100vh; height: 100dvh; width: 100vw; position: relative; }
         
+        /* 사이드바 */
         .sidebar { width: 260px; height: 100dvh; background-color: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; overflow-y: auto; }
         .main-container { flex: 1; overflow-y: auto; background-color: var(--bg-deep); padding-bottom: 50px; }
 
@@ -47,6 +48,7 @@
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* 모바일 대응 */
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1040; backdrop-filter: blur(2px); transition: 0.3s; opacity: 0; }
         .sidebar-overlay.active { display: block; opacity: 1; }
         @media (max-width: 768px) {
@@ -58,12 +60,14 @@
 
         .mobile-menu-btn { display: none; position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-accent); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1030; border: none; font-size: 1.8rem; cursor: pointer; }
 
+        /* 공통 카드 & 입력창 */
         .t5-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .t5-input-dark { background: #1e222d !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .t5-input-dark::placeholder { color: #8b95a1 !important; opacity: 1 !important; }
         .t5-btn-primary { background: var(--primary-accent); border: none; color: white; border-radius: 10px; padding: 14px; font-weight: bold; width: 100%; transition: 0.2s; cursor: pointer; }
         .t5-btn-small { background: rgba(255,255,255,0.1); border: none; color: #ced4da; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; transition: 0.2s; cursor: pointer; }
 
+        /* 작업일보 테이블 */
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card-bg); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
         .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; color: white; padding: 0; }
         .date-row td { height: 22px !important; background: #1e222d; font-size: 0.75rem; color: #94a3b8; font-weight: bold; }
@@ -74,6 +78,7 @@
         .g-yellow { background: rgba(245, 158, 11, 0.2) !important; color: #f59e0b !important; }
         .g-red { background: rgba(239, 68, 68, 0.2) !important; color: #ef4444 !important; }
 
+        /* T5 결과 & 히스토리 */
         #t5-temp-result { background: #1c212d; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
         .res-gap { color: #fcc419; font-weight: bold; font-size: 0.85rem; }
         .history-card { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 12px; position: relative; }
@@ -239,7 +244,7 @@
                 <div class="t5-card">
                     <h6 class="fw-bold mb-3">현재 소속 팀원</h6>
                     <div id="member-list" class="list-group list-group-flush">
-                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -304,11 +309,11 @@
                 document.getElementById('displayTeamId').value = myTeamId;
                 loadHistory(); loadT5History(); renderAllTeams(); 
             }
-            checkTeamUI(); // 로그인 후 팀 유무에 따라 UI 세팅
+            checkTeamUI(); 
         } else { document.getElementById('auth-overlay').style.display = 'flex'; }
     });
 
-    /* --- [팀원 관리 - 생성 및 합류 로직 추가] --- */
+    /* --- [팀원 관리 - 생성 및 합류 로직] --- */
     function checkTeamUI() {
         if(myTeamId) {
             document.getElementById('no-team-section').style.display = 'none';
@@ -370,7 +375,7 @@
 
     function copyText(text) { navigator.clipboard.writeText(text); alert("복사되었습니다."); }
 
-    /* --- [작업일보 로직] --- */
+    /* --- [작업일보 로직 (권한 체크 추가)] --- */
     function renderAllTeams() {
         const container = document.getElementById('team-container');
         const monthVal = document.getElementById('logMonth').value || "2026-04";
@@ -424,19 +429,45 @@
     function updateWorkerName(tIdx, wIdx, val) { teamData[tIdx].workers[wIdx].name = val; }
     function removeWorker(tIdx, wIdx) { if(confirm("삭제?")) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); } }
     async function saveMonthlyLog() { const month = document.getElementById('logMonth').value, site = document.getElementById('siteName').value.trim(); if(!site) return alert("현장명 필수!"); const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).set(data); else await db.collection("monthly_logs").add(data); alert("저장 완료"); location.reload(); }
-    function loadHistory() { db.collection("monthly_logs").where("teamId","==", myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { document.getElementById('history-list').innerHTML = ss.docs.map(doc => { const d = doc.data(); return `
-        <div class="col-md-6"><div class="t5-card p-3 d-flex justify-content-between align-items-center m-0">
-                <div><small style="color:var(--primary-accent);">${d.month}</small><br><b class="fs-6">${d.site}</b></div>
-                <div class="d-flex gap-1">
-                    <button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button>
-                    <button class="t5-btn-small" style="background:var(--primary-accent); color:white;" onclick="copyLog('${doc.id}')">복사</button>
-                    <button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>
-                </div></div></div>`; }).join('') || '<p class="text-secondary small ms-2">기록 없음</p>'; }); 
-    }
-    async function editLog(id) { const doc = await db.collection("monthly_logs").doc(id).get(); const d = doc.data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = d.teamData; showPage('worklog', document.querySelectorAll('.nav-link')[1]); renderAllTeams(); }
-    async function copyLog(id) { const doc = await db.collection("monthly_logs").doc(id).get(); const d = doc.data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = d.teamData; showPage('worklog', document.querySelectorAll('.nav-link')[1]); renderAllTeams(); alert("복사되었습니다."); }
+    
+    // [권한체크 적용] 작업일보 히스토리 로드
+    function loadHistory() { 
+        db.collection("monthly_logs").where("teamId","==", myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { 
+            document.getElementById('history-list').innerHTML = ss.docs.map(doc => { 
+                const d = doc.data(); 
+                const isOwner = (d.writer === userNickname); // 작성자 일치 여부 확인
 
-    /* --- [T5 계산기 로직] --- */
+                // 작성자만 수정/삭제 가능, 다른 사람은 복사/엑셀만 가능
+                let buttonsHTML = '';
+                if(isOwner) {
+                    buttonsHTML += `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button>`;
+                    buttonsHTML += `<button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>`;
+                }
+                buttonsHTML += `<button class="t5-btn-small" style="background:var(--primary-accent); color:white;" onclick="copyLog('${doc.id}')">복사</button>`;
+                buttonsHTML += `<button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>`;
+
+                return `
+                <div class="col-md-6">
+                    <div class="t5-card p-3 d-flex justify-content-between align-items-center m-0">
+                        <div>
+                            <small style="color:var(--primary-accent);">${d.month}</small><br>
+                            <b class="fs-6">${d.site}</b><br>
+                            <span class="small text-secondary" style="font-size:0.7rem;"><i class="bi bi-person-fill"></i> ${d.writer || '관리자'}</span>
+                        </div>
+                        <div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">
+                            ${buttonsHTML}
+                        </div>
+                    </div>
+                </div>`; 
+            }).join('') || '<p class="text-secondary small ms-2">기록 없음</p>'; 
+        }); 
+    }
+    
+    async function editLog(id) { const doc = await db.collection("monthly_logs").doc(id).get(); const d = doc.data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = d.teamData; showPage('worklog', document.querySelectorAll('.nav-link')[1]); renderAllTeams(); }
+    async function copyLog(id) { const doc = await db.collection("monthly_logs").doc(id).get(); const d = doc.data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = d.teamData; showPage('worklog', document.querySelectorAll('.nav-link')[1]); renderAllTeams(); alert("데이터가 복사되었습니다. 새 현장명으로 저장하세요."); }
+    async function deleteLog(id) { if(confirm("이 작업일보를 완전히 삭제할까요?")) { await db.collection("monthly_logs").doc(id).delete(); alert("삭제되었습니다."); } }
+
+    /* --- [T5 계산기 로직 (권한 체크 추가)] --- */
     function toggleT5Specs() { const el = document.getElementById('t5-spec-container'); el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
     function addNewSpec() { let n = prompt("규격 명칭(예: 1500)"); if(!n) return; let a = prompt(n+"용 실제 치수(mm)"); if(!a) return; let div = document.createElement('div'); div.className = "col-4 col-md-auto spec-item position-relative"; div.innerHTML = `<label class="small text-secondary mb-1">${n}용</label><input type="number" class="form-control t5-input-dark text-center p-1 fs-6 spec-actual" data-nominal="${n}" value="${a}"><button class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0" style="width:20px;height:20px;font-size:10px;" onclick="this.parentElement.remove()">X</button>`; document.getElementById('t5-spec-list').appendChild(div); }
     function addT5Row() { const div = document.createElement('div'); div.className = "row g-2 mb-2 t5-row-item"; div.innerHTML = `<div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이"></div>`; document.getElementById('t5-input-container').appendChild(div); }
@@ -478,14 +509,27 @@
         alert("저장 완료!"); location.reload();
     }
 
+    // [권한체크 적용] T5 히스토리 로드
     function loadT5History() {
         db.collection("t5_logs").where("teamId","==", myTeamId).orderBy("createdAt","desc").limit(20).onSnapshot(ss => {
             document.getElementById('t5-history-list').innerHTML = ss.docs.map(doc => {
                 const d = doc.data();
-                return `<div class="history-card"><div class="history-author"><i class="bi bi-person-fill"></i> ${d.writer}</div><h6 class="fw-bold text-white mb-2">${d.siteName}</h6><p class="text-secondary small mb-3">${d.resultText}</p><div class="d-flex gap-2">
-                    <button class="t5-btn-small bg-primary text-white" style="flex:1;" onclick="loadT5Log('${doc.id}')">불러오기</button>
-                    <button class="t5-btn-small" style="flex:1; background:var(--success-btn); color:white;" onclick="copyT5Order('${d.siteName}', '${d.resultText}')">발주 복사</button>
-                    <button class="t5-btn-small bg-danger text-white" style="flex:1;" onclick="deleteT5Log('${doc.id}')">삭제</button></div></div>`;
+                const isOwner = (d.writer === userNickname); // 작성자 일치 여부 확인
+                
+                // 작성자만 삭제 버튼 노출
+                let deleteBtnHTML = isOwner ? `<button class="t5-btn-small bg-danger text-white" style="flex:1;" onclick="deleteT5Log('${doc.id}')">삭제</button>` : '';
+
+                return `
+                <div class="history-card">
+                    <div class="history-author"><i class="bi bi-person-fill"></i> ${d.writer}</div>
+                    <h6 class="fw-bold text-white mb-2">${d.siteName}</h6>
+                    <p class="text-secondary small mb-3">${d.resultText}</p>
+                    <div class="d-flex gap-2">
+                        <button class="t5-btn-small bg-primary text-white" style="flex:1;" onclick="loadT5Log('${doc.id}')">불러오기</button>
+                        <button class="t5-btn-small" style="flex:1; background:var(--success-btn); color:white;" onclick="copyT5Order('${d.siteName}', '${d.resultText}')">발주 복사</button>
+                        ${deleteBtnHTML}
+                    </div>
+                </div>`;
             }).join('') || '<p class="text-secondary small ms-2">내역 없음</p>';
         });
     }
@@ -503,7 +547,7 @@
         const t = document.createElement("textarea"); document.body.appendChild(t); t.value = fmt; t.select(); document.execCommand('copy'); document.body.removeChild(t);
         alert("카톡용 발주내용 복사 완료!\n\n" + fmt);
     }
-    async function deleteT5Log(id) { if(confirm("삭제?")) await db.collection("t5_logs").doc(id).delete(); }
+    async function deleteT5Log(id) { if(confirm("이 산출 기록을 삭제할까요?")) await db.collection("t5_logs").doc(id).delete(); }
 
     /* --- [인증 & 엑셀 (기존)] --- */
     function toggleAuthMode() { isLoginMode = !isLoginMode; document.getElementById('auth-title').innerText = isLoginMode ? "현장 관리 접속" : "회원가입 시작"; document.getElementById('userNick').style.display = isLoginMode ? "none" : "block"; }
