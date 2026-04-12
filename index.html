@@ -31,10 +31,10 @@
 
         body { background-color: var(--bg-deep); color: #f8fafc; font-family: 'Pretendard', sans-serif; margin: 0; overflow: hidden; }
 
-        .app-wrapper { display: flex; height: 100vh; width: 100vw; position: relative; }
+        .app-wrapper { display: flex; height: 100vh; height: 100dvh; width: 100vw; position: relative; }
         
-        /* 사이드바 기본 세팅 (PC) */
-        .sidebar { width: 260px; height: 100vh; background-color: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; }
+        /* 사이드바 기본 세팅 (PC) - 스크롤 기능 추가 */
+        .sidebar { width: 260px; height: 100dvh; background-color: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; overflow-y: auto; }
         
         .main-container { flex: 1; overflow-y: auto; background-color: var(--bg-deep); padding-bottom: 50px; }
 
@@ -51,31 +51,43 @@
         .sidebar-overlay.active { display: block; opacity: 1; }
         
         @media (max-width: 768px) {
-            .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); } /* 기본적으로 왼쪽으로 숨김 */
-            .sidebar.active { transform: translateX(0); } /* 버튼 누르면 나옴 */
-            .page-section { padding: 20px 15px; } /* 모바일에서는 여백을 조금 줄여서 화면 넓게 */
-            .mobile-menu-btn { display: flex !important; } /* 모바일에서만 메뉴 버튼 보이기 */
+            .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); } 
+            .sidebar.active { transform: translateX(0); } 
+            .page-section { padding: 20px 15px; } 
+            .mobile-menu-btn { display: flex !important; } 
         }
 
         .mobile-menu-btn { display: none; position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-accent); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1030; border: none; font-size: 1.8rem; cursor: pointer; transition: 0.2s; }
         .mobile-menu-btn:active { transform: scale(0.9); }
 
-        /* 기타 스타일 (T5, 작업일보 등 기존 동일) */
+        /* T5 계산기 & 카드 스타일 */
         .t5-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .t5-input-dark { background: #1e222d !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .t5-input-dark:focus { border-color: var(--primary-accent) !important; box-shadow: none !important; }
+        
+        /* [요청3] Placeholder 가시성 완벽 해결 */
+        .t5-input-dark::placeholder { color: #8b95a1 !important; opacity: 1 !important; }
+
         .t5-btn-primary { background: var(--primary-accent); border: none; color: white; border-radius: 10px; padding: 14px; font-weight: bold; width: 100%; transition: 0.2s; }
         .t5-btn-primary:active { transform: scale(0.98); }
-        .t5-btn-small { background: rgba(255,255,255,0.1); border: none; color: #ced4da; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; transition: 0.2s; }
+        .t5-btn-small { background: rgba(255,255,255,0.1); border: none; color: #ced4da; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; transition: 0.2s; cursor: pointer; }
+        .t5-btn-small:hover { background: rgba(255,255,255,0.2); }
         
         .history-card { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 12px; position: relative; }
         .history-author { position: absolute; top: 18px; right: 18px; font-size: 0.8rem; color: #8b95a1; display: flex; align-items: center; }
         .history-author i { color: #845ef7; margin-right: 4px; }
 
+        /* 작업일보 스타일 */
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card-bg); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
         .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; color: white; padding: 0; }
         .date-row td { height: 22px !important; background: #1e222d; font-size: 0.75rem; color: #94a3b8; }
         .name-cell { width: 75px; background: #181b24 !important; font-weight: bold; }
+        
+        /* 이름 직접 입력용 인풋 스타일 */
+        .name-input { width: 90%; background: transparent; border: none; color: white; text-align: center; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 2px; }
+        .name-input:focus { outline: none; border-bottom-color: var(--primary-accent); }
+        .name-input::placeholder { color: #4b5563; font-weight: normal; }
+
         .gongsu-cell { cursor: pointer; font-weight: bold; -webkit-user-select: none; user-select: none; }
         .g-green { background: rgba(16, 185, 129, 0.2) !important; color: #10b981 !important; }
         .g-yellow { background: rgba(245, 158, 11, 0.2) !important; color: #f59e0b !important; }
@@ -103,7 +115,7 @@
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <nav class="sidebar" id="sidebar">
-        <div class="p-4 text-center border-bottom border-secondary border-opacity-10">
+        <div class="p-4 text-center border-bottom border-secondary border-opacity-10 mt-2">
             <img src="kimmoksu_main_logo.png" alt="로고" style="max-width: 140px; cursor: pointer;" onclick="location.reload()">
         </div>
         <div class="flex-grow-1 mt-3">
@@ -111,7 +123,8 @@
             <div class="nav-link" onclick="showPage('worklog', this)"><i class="bi bi-journal-check"></i> 작업일보</div>
             <div class="nav-link" onclick="showPage('t5', this)"><i class="bi bi-calculator"></i> T5 계산기</div>
         </div>
-        <div class="p-4 border-top border-secondary border-opacity-10 dropup">
+        
+        <div class="p-4 border-top border-secondary border-opacity-10 dropup mt-auto">
             <div class="d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
                 <i class="bi bi-person-circle fs-3 me-3" style="color:var(--primary-accent);"></i>
                 <div class="flex-grow-1 overflow-hidden">
@@ -167,24 +180,40 @@
 
         <section id="page-t5" class="page-section">
             <h5 class="mb-4" style="color:var(--primary-accent);"><i class="bi bi-caret-right-fill"></i> 김목수이야기</h5>
-            <div class="t5-card d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold m-0">제품 규격 설정</h6>
-                <button class="t5-btn-small rounded-circle px-2" onclick="alert('규격 추가 설정은 준비중입니다.')">+</button>
+            
+            <div class="t5-card mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold m-0">제품 규격 설정</h6>
+                    <button class="t5-btn-small rounded-circle px-2" onclick="toggleT5Specs()"><i class="bi bi-plus-lg"></i></button>
+                </div>
+                <div id="t5-spec-container" style="display:none;" class="mt-3 pt-3 border-top border-secondary border-opacity-25">
+                    <div class="row g-2">
+                        <div class="col-3"><label class="small text-secondary mb-1">1200용</label><input type="number" id="spec-l" class="form-control t5-input-dark text-center p-1 fs-6" value="1200"></div>
+                        <div class="col-3"><label class="small text-secondary mb-1">900용</label><input type="number" id="spec-m" class="form-control t5-input-dark text-center p-1 fs-6" value="900"></div>
+                        <div class="col-3"><label class="small text-secondary mb-1">600용</label><input type="number" id="spec-s" class="form-control t5-input-dark text-center p-1 fs-6" value="600"></div>
+                        <div class="col-3"><label class="small text-secondary mb-1">300용</label><input type="number" id="spec-xs" class="form-control t5-input-dark text-center p-1 fs-6" value="300"></div>
+                    </div>
+                </div>
             </div>
+
             <div class="t5-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold m-0">실측 길이 입력 (mm)</h6>
                     <button class="t5-btn-small" onclick="addT5Row()">+ 추가</button>
                 </div>
+                
                 <input type="text" id="t5-site-title" class="form-control t5-input-dark mb-3" placeholder="현장/부위 명칭 (예: 일신이온)">
+                
                 <div id="t5-input-container">
                     <div class="row g-2 mb-2 t5-row-item">
                         <div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간 (예: 거실)"></div>
-                        <div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이"></div>
+                        <div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이 (예: 4500)"></div>
                     </div>
                 </div>
+                
                 <button class="t5-btn-primary mt-3" onclick="calculateAndSaveT5()">1. 계산하기</button>
             </div>
+
             <h6 class="fw-bold mt-5 mb-3"><i class="bi bi-card-text me-2"></i>팀 공유 히스토리</h6>
             <div id="t5-history-list"></div>
         </section>
@@ -201,7 +230,6 @@
     let myEmail, myTeamId, editingId = null, userNickname = "관리자";
     let isLoginMode = true;
     
-    // 기본 4개 팀 세팅
     let teamData = [
         { teamName: "목공팀", workers: [] },
         { teamName: "도장팀", workers: [] },
@@ -209,7 +237,6 @@
         { teamName: "필름팀", workers: [] }
     ];
 
-    // [수정됨] 모바일 사이드바 토글 및 자동 닫힘 기능
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('sidebarOverlay').classList.toggle('active');
@@ -221,7 +248,6 @@
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
         el.classList.add('active');
 
-        // 모바일 화면일 경우, 메뉴 이동 후 사이드바 자동 닫기
         if (window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.remove('active');
             document.getElementById('sidebarOverlay').classList.remove('active');
@@ -256,17 +282,26 @@
             let teamTotal = 0;
             const tables = team.workers.map((w, wIdx) => {
                 let pSum = 0; Object.values(w.days).forEach(v => pSum += parseFloat(v || 0)); teamTotal += pSum;
-                return `<table class="excel-table"><tr class="date-row"><td rowspan="4" class="name-cell">${w.name}<br><button onclick="removeWorker(${tIdx}, ${wIdx})" class="btn btn-danger btn-sm p-0 px-1 mt-1" style="font-size:0.6rem;">삭제</button></td>${loopDays(year, month, 1, 16, 'date')}</tr><tr>${loopDays(year, month, 1, 16, 'input', tIdx, wIdx)}</tr><tr class="date-row">${loopDays(year, month, 17, 31, 'date', 0, 0, lastDay)}<td style="background:#1e222d;">계</td></tr><tr>${loopDays(year, month, 17, 31, 'input', tIdx, wIdx, lastDay)}<td class="fw-bold" style="color:var(--primary-accent);">${pSum % 1 === 0 ? pSum : pSum.toFixed(1)}</td></tr></table>`;
+                // [요청1 해결] 인원 추가 시 표 먼저 생성 & 이름 입력칸(input) 삽입
+                return `<table class="excel-table"><tr class="date-row"><td rowspan="4" class="name-cell">
+                    <input type="text" class="name-input" value="${w.name}" onchange="updateWorkerName(${tIdx}, ${wIdx}, this.value)" placeholder="이름입력"><br>
+                    <button onclick="removeWorker(${tIdx}, ${wIdx})" class="btn btn-danger btn-sm p-0 px-2 mt-2" style="font-size:0.6rem;">삭제</button>
+                    </td>${loopDays(year, month, 1, 16, 'date')}</tr><tr>${loopDays(year, month, 1, 16, 'input', tIdx, wIdx)}</tr><tr class="date-row">${loopDays(year, month, 17, 31, 'date', 0, 0, lastDay)}<td style="background:#1e222d;">계</td></tr><tr>${loopDays(year, month, 17, 31, 'input', tIdx, wIdx, lastDay)}<td class="fw-bold" style="color:var(--primary-accent);">${pSum % 1 === 0 ? pSum : pSum.toFixed(1)}</td></tr></table>`;
             }).join('');
             return `<div class="mb-5"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="m-0 fw-bold">${team.teamName}</h6><button onclick="addWorker(${tIdx})" class="t5-btn-small px-3">+</button></div>${tables}<div class="text-end small text-secondary">공정 소계: <b>${teamTotal.toFixed(1)}</b></div></div>`;
         }).join('');
         bindLongPress();
     }
+    
     function loopDays(y, m, start, end, type, tIdx, wIdx, lastDay = 31) { let html = ""; for (let d = start; d <= end; d++) { const isInvalid = d > lastDay; if (type === 'date') html += `<td>${isInvalid ? '' : d}</td>`; else { if (isInvalid) html += `<td style="background:#131722;"></td>`; else { const val = teamData[tIdx].workers[wIdx].days[d] || ""; let c = ""; if(val) { const n=parseFloat(val); c = n>2?"g-red":n>1?"g-yellow":"g-green"; } html += `<td class="gongsu-cell ${c}" data-t="${tIdx}" data-w="${wIdx}" data-d="${d}" onclick="handleCellClick(this)">${val}</td>`; } } } return html; }
     function handleCellClick(el) { const { t, w, d } = el.dataset; teamData[t].workers[w].days[d] = (teamData[t].workers[w].days[d] == 1 ? "" : 1); renderAllTeams(); }
-    function bindLongPress() { document.querySelectorAll('.gongsu-cell').forEach(cell => { let timer; cell.onmousedown = cell.ontouchstart = () => timer = setTimeout(() => { const { t, w, d } = cell.dataset; const input = prompt(`${teamData[t].workers[w].name} - ${d}일 공수 입력`, teamData[t].workers[w].days[d]); if (input !== null) { teamData[t].workers[w].days[d] = input; renderAllTeams(); } }, 700); cell.onmouseup = cell.ontouchend = () => clearTimeout(timer); }); }
+    function bindLongPress() { document.querySelectorAll('.gongsu-cell').forEach(cell => { let timer; cell.onmousedown = cell.ontouchstart = () => timer = setTimeout(() => { const { t, w, d } = cell.dataset; const input = prompt(`${teamData[t].workers[w].name || '작업자'} - ${d}일 공수 입력`, teamData[t].workers[w].days[d]); if (input !== null) { teamData[t].workers[w].days[d] = input; renderAllTeams(); } }, 700); cell.onmouseup = cell.ontouchend = () => clearTimeout(timer); }); }
     function addTeam() { const n = prompt("공정명 입력"); if(n) { teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
-    function addWorker(tIdx) { const n = prompt("성함 입력"); if(n) { teamData[tIdx].workers.push({name:n, days:{}}); renderAllTeams(); } }
+    
+    // [요청1 해결] 이름 묻는 prompt 제거, 바로 표 생성
+    function addWorker(tIdx) { teamData[tIdx].workers.push({name:"", days:{}}); renderAllTeams(); }
+    function updateWorkerName(tIdx, wIdx, val) { teamData[tIdx].workers[wIdx].name = val; }
+    
     function removeWorker(tIdx, wIdx) { if(confirm("삭제할까요?")) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); } }
     
     async function saveMonthlyLog() { const month = document.getElementById('logMonth').value, site = document.getElementById('siteName').value.trim(); if(!site) return alert("현장명 필수!"); const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).set(data); else await db.collection("monthly_logs").add(data); alert("저장 완료"); location.reload(); }
@@ -299,11 +334,16 @@
         alert("데이터를 복사했습니다! 현장명을 바꾸고 저장해주세요.");
     }
 
-    // [T5 계산기 로직]
+    // [요청2 해결] T5 규격 토글 기능
+    function toggleT5Specs() {
+        const el = document.getElementById('t5-spec-container');
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
     function addT5Row() {
         const div = document.createElement('div');
         div.className = "row g-2 mb-2 t5-row-item";
-        div.innerHTML = `<div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이"></div>`;
+        div.innerHTML = `<div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간 (예: 거실)"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이"></div>`;
         document.getElementById('t5-input-container').appendChild(div);
     }
 
@@ -319,19 +359,30 @@
 
         if(totalLength === 0) return alert("길이를 입력하세요.");
 
-        let lengths = [1200, 900, 600, 300], result = {}, remain = totalLength;
-        lengths.forEach(l => { result[l] = Math.floor(remain / l); remain %= l; });
+        // [요청2 해결] 입력된 커스텀 규격값 가져오기
+        let customSpecs = [
+            parseInt(document.getElementById('spec-l').value) || 1200,
+            parseInt(document.getElementById('spec-m').value) || 900,
+            parseInt(document.getElementById('spec-s').value) || 600,
+            parseInt(document.getElementById('spec-xs').value) || 300
+        ];
+
+        // 크기순으로 정렬 (에러 방지)
+        customSpecs.sort((a,b) => b-a);
+        
+        let result = {}, remain = totalLength;
+        customSpecs.forEach(l => { result[l] = Math.floor(remain / l); remain %= l; });
 
         let resultArr = [];
-        lengths.forEach(l => { if(result[l] > 0) resultArr.push(`${l} - ${result[l]}개`); });
-        const resultStr = resultArr.join(' / ');
+        customSpecs.forEach(l => { if(result[l] > 0) resultArr.push(`${l}-${result[l]}개`); });
+        const resultStr = resultArr.join(', ');
 
         const t5Data = { teamId: myTeamId, siteName: site, resultText: resultStr, writer: userNickname, createdAt: Date.now() };
 
         try {
             await db.collection("t5_logs").add(t5Data);
             document.getElementById('t5-site-title').value = '';
-            document.getElementById('t5-input-container').innerHTML = `<div class="row g-2 mb-2 t5-row-item"><div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간 (예: 거실)"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이"></div></div>`;
+            document.getElementById('t5-input-container').innerHTML = `<div class="row g-2 mb-2 t5-row-item"><div class="col-6"><input type="text" class="form-control t5-input-dark t5-section-name" placeholder="구간 (예: 거실)"></div><div class="col-6"><input type="number" class="form-control t5-input-dark t5-length-val" placeholder="길이 (예: 4500)"></div></div>`;
             alert("산출 완료! 히스토리에 자동 등록되었습니다.");
         } catch(e) { alert("저장 실패: " + e.message); }
     }
@@ -362,4 +413,3 @@
 </script>
 </body>
 </html>
-
