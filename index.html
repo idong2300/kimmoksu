@@ -6,230 +6,177 @@
     
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="favicon.png">
-    <meta property="og:title" content="김목수이야기 - 스마트 작업일보">
-    <meta property="og:description" content="현장 공수 관리 및 엑셀 자동 변환 시스템">
+    <meta property="og:title" content="김목수이야기 - 스마트 대시보드">
+    <meta property="og:description" content="현장 관리 전문 시스템">
     <meta property="og:image" content="og-image.png">
 
-    <title>김목수이야기 - 대시보드</title>
+    <title>김목수이야기 - Dashboard</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="firebase-config.js"></script>
-    <link rel="stylesheet" href="style.css"> <style>
-        /* 커스텀 다크 테마 설정 */
-        body { background-color: #0f172a; color: #f8fafc; font-family: 'Pretendard', sans-serif; }
-        
-        /* 로그인 화면 스타일 */
-        .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .login-card { background-color: #1e293b; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        .auth-logo { width: 100%; max-width: 180px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1)); margin-bottom: 20px; }
-        .form-control-dark { background-color: #0f172a; border: 1px solid #334155; color: white; }
-        .form-control-dark:focus { background-color: #0f172a; border-color: #3b82f6; color: white; box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25); }
 
-        /* 사이드바 스타일 */
-        .sidebar { background-color: #1e293b; border-right: 1px solid rgba(255,255,255,0.05); min-height: 100vh; transition: all 0.3s; }
-        .sidebar .nav-link { color: #94a3b8; border-radius: 0.5rem; margin-bottom: 0.5rem; transition: all 0.2s; padding: 0.8rem 1rem; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #3b82f6; color: white; transform: translateX(5px); }
-        .sidebar .nav-link i { font-size: 1.2rem; width: 24px; text-align: center; margin-right: 10px; }
-        
-        /* 메인 콘텐츠 영역 (카드 호버 효과) */
-        .main-content { padding: 2rem; }
-        .dash-card { background-color: #1e293b; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
-        .dash-card:hover { transform: translateY(-8px); border-color: var(--bs-primary); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4); }
-        .dash-card .icon-box { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    <style>
+        :root {
+            --bg-deep: #020617; /* 완전한 다크 배경 */
+            --sidebar-bg: #0f172a;
+            --card-bg: #1e293b;
+            --primary-accent: #3b82f6;
+        }
+
+        body { background-color: var(--bg-deep); color: #f8fafc; font-family: 'Pretendard', sans-serif; overflow-x: hidden; }
+
+        /* 사이드바 고정 스타일 */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            z-index: 1000;
+            transition: 0.3s;
+        }
+
+        /* 메인 콘텐츠 영역 (사이드바 우측) */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            padding: 40px;
+            transition: 0.3s;
+        }
+
+        /* 모바일 대응 */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 240px; }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+
+        /* 메뉴 아이템 POP 효과 */
+        .nav-link {
+            color: #94a3b8;
+            padding: 12px 20px;
+            margin: 4px 15px;
+            border-radius: 10px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--primary-accent);
+            color: white;
+            transform: translateX(8px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .content-section { display: none; animation: fadeIn 0.4s ease-out; }
+        .content-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dash-card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .dash-card:hover { transform: translateY(-10px); border-color: var(--primary-accent); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
     </style>
 </head>
 <body>
 
-<div id="auth-box" class="login-wrapper" style="display: none;">
-    <div class="login-card text-center">
-        <img src="kimmoksu_main_logo.png" alt="로고" class="auth-logo">
-        <h4 id="auth-title" class="fw-bold mb-4">현장 관리 로그인</h4>
-        
-        <form onsubmit="event.preventDefault(); handleAuth();">
-            <input type="text" id="userNick" class="form-control form-control-dark mb-3 py-2" placeholder="현장에서 사용할 닉네임" style="display:none;">
-            <input type="email" id="userEmail" class="form-control form-control-dark mb-3 py-2" placeholder="이메일 주소" required>
-            <input type="password" id="userPw" class="form-control form-control-dark mb-3 py-2" placeholder="비밀번호" required>
-            
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="rememberMe" checked>
-                    <label class="form-check-label text-secondary small" for="rememberMe">자동 로그인</label>
-                </div>
+<button class="btn btn-primary d-md-none position-fixed bottom-0 end-0 m-4 rounded-circle" style="z-index: 2000; width:60px; height:60px;" onclick="document.querySelector('.sidebar').classList.toggle('active')">
+    <i class="bi bi-list fs-3"></i>
+</button>
+
+<div class="sidebar d-flex flex-column">
+    <div class="p-4 text-center border-bottom border-secondary border-opacity-25">
+        <img src="kimmoksu_main_logo.png" alt="로고" style="max-width: 150px;">
+    </div>
+    
+    <ul class="nav nav-pills flex-column mt-4 mb-auto">
+        <li><a href="#" class="nav-link active" onclick="showSection('home', this)"><i class="bi bi-grid-fill me-2"></i> 대시보드</a></li>
+        <li><a href="monthly_log.html" class="nav-link"><i class="bi bi-journal-check me-2"></i> 실전 작업일보</a></li>
+        <li><a href="work_log_test.html" class="nav-link"><i class="bi bi-flask me-2"></i> test ver.</a></li>
+        <li><a href="t5.html" class="nav-link"><i class="bi bi-calculator me-2"></i> T5 계산기</a></li>
+        <li><a href="#" class="nav-link" onclick="alert('준비 중')"><i class="bi bi-tools me-2"></i> 공구/자재 관리</a></li>
+    </ul>
+
+    <div class="p-4 border-top border-secondary border-opacity-10">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle fs-3 me-3 text-primary"></i>
+            <div class="overflow-hidden">
+                <div id="sideUserName" class="fw-bold text-truncate">사용자</div>
+                <div class="small text-secondary" style="font-size: 0.75rem;">김목수이야기 Pro</div>
             </div>
-            
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">접속하기</button>
-        </form>
-        
-        <p class="mt-4 text-secondary small">아이디가 없나요? <span id="toggle-link" class="text-primary fw-bold" style="cursor:pointer;" onclick="toggleAuthMode()">회원가입</span></p>
+            <button class="btn btn-link text-danger ms-auto p-0" onclick="handleLogout()"><i class="bi bi-box-arrow-right fs-5"></i></button>
+        </div>
     </div>
 </div>
 
-<div id="dashboard-box" class="container-fluid" style="display: none;">
-    <div class="row flex-nowrap">
-        
-        <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-flex flex-column">
-            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-4 text-white min-vh-100">
-                <a href="#" class="d-flex align-items-center pb-3 mb-md-4 me-md-auto text-white text-decoration-none border-bottom border-secondary w-100">
-                    <img src="favicon.png" alt="아이콘" width="30" height="30" class="me-2 rounded">
-                    <span class="fs-5 fw-bold d-none d-sm-inline">김목수이야기</span>
-                </a>
-                
-                <ul class="nav flex-column w-100 mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
-                    <li class="nav-item w-100">
-                        <a href="#" class="nav-link active" aria-current="page">
-                            <i class="bi bi-house-door"></i><span class="ms-1 d-none d-sm-inline">홈 (대시보드)</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a href="monthly_log.html" class="nav-link">
-                            <i class="bi bi-journal-text"></i><span class="ms-1 d-none d-sm-inline">실전 작업일보</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a href="work_log_test.html" class="nav-link text-warning">
-                            <i class="bi bi-flask"></i><span class="ms-1 d-none d-sm-inline">연습장 (Test)</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a href="t5.html" class="nav-link">
-                            <i class="bi bi-calculator"></i><span class="ms-1 d-none d-sm-inline">T5 계산기</span>
-                        </a>
-                    </li>
-                    <li class="nav-item w-100">
-                        <a href="#" class="nav-link" onclick="alert('준비중입니다.')">
-                            <i class="bi bi-grid-3x3"></i><span class="ms-1 d-none d-sm-inline">줄눈 계산기</span>
-                        </a>
-                    </li>
-                </ul>
-                
-                <hr class="border-secondary w-100">
-                <div class="dropdown pb-4 w-100">
-                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle px-2" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle fs-4 me-2"></i>
-                        <span class="d-none d-sm-inline mx-1 fw-bold" id="sidebarUserName">사용자</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                        <li><a class="dropdown-item" href="profile.html">내 정보 수정</a></li>
-                        <li><a class="dropdown-item" href="team.html">팀원 관리</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="handleLogout()">로그아웃</a></li>
-                    </ul>
+<main class="main-content">
+    <div id="home" class="content-section active">
+        <div class="mb-5">
+            <h1 class="fw-bold mb-2" id="welcomeMsg">반갑습니다!</h1>
+            <p class="text-secondary fs-5">현장 상황을 한눈에 파악하고 관리하세요.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-card h-100" onclick="location.href='monthly_log.html'">
+                    <div class="text-primary mb-3"><i class="bi bi-calendar-check fs-1"></i></div>
+                    <h3>작업일보</h3>
+                    <p class="text-secondary m-0">공수 기입부터 엑셀 출력까지 한 번에.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-card h-100" onclick="location.href='t5.html'">
+                    <div class="text-warning mb-3"><i class="bi bi-lightbulb fs-1"></i></div>
+                    <h3>T5 계산기</h3>
+                    <p class="text-secondary m-0">간접조명 물량 산출 및 견적 보조.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-card h-100 opacity-50">
+                    <div class="text-success mb-3"><i class="bi bi-house-gear fs-1"></i></div>
+                    <h3>도면 뷰어</h3>
+                    <p class="text-secondary m-0">업데이트 준비 중인 기능입니다.</p>
                 </div>
             </div>
         </div>
-
-        <div class="col py-3 main-content">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="fw-bold m-0" id="displayUserName">환영합니다!</h2>
-                    <p class="text-secondary mt-1">오늘도 안전하게 현장을 관리하세요.</p>
-                </div>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-12 col-md-6 col-lg-3">
-                    <div class="dash-card p-4 h-100" onclick="location.href='monthly_log.html'">
-                        <div class="icon-box"><i class="bi bi-journal-check"></i></div>
-                        <h5 class="fw-bold text-white mb-2">실전 작업일보</h5>
-                        <p class="text-secondary small m-0">현장 공수 입력 및 엑셀 출력</p>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-3">
-                    <div class="dash-card p-4 h-100" onclick="location.href='work_log_test.html'" style="border-color: rgba(251, 191, 36, 0.3);">
-                        <div class="icon-box text-warning" style="background-color: rgba(251, 191, 36, 0.1);"><i class="bi bi-flask"></i></div>
-                        <h5 class="fw-bold text-white mb-2">연습용 장부</h5>
-                        <p class="text-secondary small m-0">데이터 충돌 없는 테스트 공간</p>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-3">
-                    <div class="dash-card p-4 h-100" onclick="location.href='t5.html'">
-                        <div class="icon-box"><i class="bi bi-lightbulb"></i></div>
-                        <h5 class="fw-bold text-white mb-2">T5 계산기</h5>
-                        <p class="text-secondary small m-0">조명 자재 물량 산출</p>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-3">
-                    <div class="dash-card p-4 h-100 opacity-50" onclick="alert('준비중입니다.')">
-                        <div class="icon-box text-secondary" style="background-color: rgba(255,255,255,0.05);"><i class="bi bi-tools"></i></div>
-                        <h5 class="fw-bold text-white mb-2">줄눈/공구 관리</h5>
-                        <p class="text-secondary small m-0">업데이트 준비중</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
     </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</main>
 
 <script>
-    let isLoginMode = true;
-
-    // 로그인 상태 감시
     auth.onAuthStateChanged(async user => {
         if (user) { 
             const userDoc = await db.collection("users").doc(user.email).get();
             const nick = userDoc.exists ? userDoc.data().nickname : user.email.split('@')[0];
-            showDashboard(nick);
-        } else { 
-            document.getElementById('auth-box').style.display='flex'; 
-            document.getElementById('dashboard-box').style.display='none'; 
-        }
+            document.getElementById('welcomeMsg').innerText = `${nick}님, 반갑습니다!`;
+            document.getElementById('sideUserName').innerText = nick;
+        } else { location.href = 'index.html'; } // 실제 서비스 시 로그인 안 되면 튕기게 설정
     });
 
-    // 로그인/회원가입 모드 전환
-    function toggleAuthMode() { 
-        isLoginMode = !isLoginMode; 
-        document.getElementById('auth-title').innerText = isLoginMode ? "회원가입" : "현장 관리 로그인"; 
-        document.getElementById('userNick').style.display = isLoginMode ? "none" : "block"; 
-        document.getElementById('toggle-link').innerText = isLoginMode ? "로그인으로 돌아가기" : "회원가입";
-        
-        // 회원가입일 때 닉네임 필수 속성 제어
-        document.getElementById('userNick').required = !isLoginMode;
+    function showSection(id, el) {
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        el.classList.add('active');
+        if(window.innerWidth <= 768) document.querySelector('.sidebar').classList.remove('active');
     }
 
-    // 인증 처리 (로그인 및 회원가입)
-    async function handleAuth() {
-        const email = document.getElementById('userEmail').value.trim();
-        const pw = document.getElementById('userPw').value.trim();
-        const nick = document.getElementById('userNick').value.trim();
-        
-        try { 
-            if(isLoginMode) { 
-                await auth.signInWithEmailAndPassword(email, pw); 
-            } else { 
-                if(!nick) return alert("사용하실 이름을 입력해주세요.");
-                await auth.createUserWithEmailAndPassword(email, pw); 
-                await db.collection("users").doc(email).set({ nickname: nick, email: email, createdAt: Date.now() }); 
-            } 
-        } catch(e) { 
-            alert(e.message); 
-        }
-    }
-
-    // 대시보드 화면 표시
-    function showDashboard(n) { 
-        document.getElementById('auth-box').style.display='none'; 
-        document.getElementById('dashboard-box').style.display='block'; 
-        document.getElementById('displayUserName').innerText = `${n}님, 반갑습니다!`; 
-        document.getElementById('sidebarUserName').innerText = n; 
-    }
-
-    // 로그아웃
-    async function handleLogout() { 
-        if(confirm("정말 로그아웃 하시겠습니까?")) { 
-            await auth.signOut(); 
-            location.reload(); 
-        } 
-    }
+    async function handleLogout() { if(confirm("로그아웃 하시겠습니까?")) { await auth.signOut(); location.reload(); } }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
