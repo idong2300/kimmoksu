@@ -27,7 +27,6 @@
 
         .app-wrapper { display: flex; height: 100vh; height: 100dvh; width: 100vw; position: relative; }
         
-        /* 사이드바 & 공통 레이아웃 (기존 메인과 100% 동일) */
         .sidebar { width: 260px; height: 100dvh; background-color: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: 0.3s; z-index: 1050; overflow-y: auto; }
         .main-container { flex: 1; overflow-y: auto; background-color: var(--bg-deep); padding: 30px; max-width: 1000px; margin: 0 auto; width: 100%; }
         
@@ -46,7 +45,6 @@
 
         .mobile-menu-btn { display: none; position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-accent); color: white; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1030; border: none; font-size: 1.8rem; cursor: pointer; }
 
-        /* 펀치리스트 전용 스타일 */
         .t5-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .input-dark { background: #1e222d !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
         .input-dark::placeholder { color: #8b95a1 !important; }
@@ -61,7 +59,6 @@
         .summary-del-btn { position: absolute; top: 12px; right: 12px; background: rgba(224, 49, 49, 0.1); color: var(--danger-btn); border: none; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; transition: 0.2s; }
         .summary-del-btn:hover { background: var(--danger-btn); color: white; }
 
-        /* 상세 화면 리스트 스타일 */
         .check-item { display: flex; align-items: center; padding: 15px; border-radius: 12px; background: #1e222d; margin-bottom: 10px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); }
         .check-item.completed { opacity: 0.4; background: #131722; filter: grayscale(0.5); }
         .check-item.completed .item-text { text-decoration: line-through; color: #8b95a1; }
@@ -72,11 +69,9 @@
         .btn-del { color: #555; cursor: pointer; padding: 5px 10px; transition: 0.2s; font-size: 1.2rem; }
         .btn-del:hover { color: var(--danger-btn); }
 
-        /* 프로그레스 바 */
         .progress-container { background: #131722; border-radius: 10px; height: 16px; overflow: hidden; position: relative; margin-top: 8px; }
         .progress-fill { background: var(--primary-accent); height: 100%; width: 0%; transition: width 0.4s ease-out; }
 
-        /* 팝업(Modal) 오버레이 */
         #addTaskModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(2px); animation: fadeIn 0.2s; }
         .modal-box { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     </style>
@@ -115,14 +110,13 @@
             <div class="t5-card">
                 <div class="d-flex gap-2">
                     <input type="text" id="searchSiteInput" class="form-control input-dark py-2" placeholder="현장명을 입력하세요">
-                    <button class="btn-primary-custom px-4" onclick="createOrLoadSite()">생성</button>
+                    <button class="btn-primary-custom px-4 flex-shrink-0 text-nowrap" onclick="createOrLoadSite()">생성</button>
                 </div>
                 <p class="small text-secondary mt-2 mb-0 ms-1">* 새로운 현장명을 치고 '생성'을 누르면 방이 개설됩니다.</p>
             </div>
 
             <h5 class="fw-bold mt-5 mb-3"><i class="bi bi-archive me-2"></i>최근 진행 현장 (우리팀)</h5>
-            <div id="history-list" class="row g-3">
-                </div>
+            <div id="history-list" class="row g-3"></div>
         </div>
 
         <div id="view-detail" style="display: none;">
@@ -132,7 +126,7 @@
                     <h4 class="fw-bold m-0" id="detailSiteName" style="color:var(--primary-accent);">현장명</h4>
                     <p class="text-secondary small mt-1 mb-0">마감 펀치리스트 <span id="detailWriter" class="ms-1" style="color:#8b95a1;">(작성자: )</span></p>
                 </div>
-                <button class="round-add-btn" onclick="openAddModal()"><i class="bi bi-plus-lg"></i></button>
+                <button class="round-add-btn flex-shrink-0" onclick="openAddModal()"><i class="bi bi-plus-lg"></i></button>
             </div>
 
             <div class="d-flex justify-content-between align-items-end mb-2 px-1">
@@ -143,8 +137,7 @@
                 <div id="detailProgressBar" class="progress-fill"></div>
             </div>
 
-            <div id="checklist-container">
-                </div>
+            <div id="checklist-container"></div>
             <div style="height: 80px;"></div>
         </div>
 
@@ -172,7 +165,6 @@
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('sidebarOverlay').classList.toggle('active'); }
 
-    // 인증 및 팀 확인 (index.html과 동일한 보안)
     auth.onAuthStateChanged(async user => {
         if (user) {
             myEmail = user.email;
@@ -183,7 +175,7 @@
             const q = await db.collection("teams").where("members", "array-contains", myEmail).get();
             if (!q.empty) { 
                 myTeamId = q.docs[0].id; 
-                loadSummaryCards(); // 팀이 확인되면 요약 리스트 로드
+                loadSummaryCards();
             } else {
                 alert("소속된 팀이 없습니다. 홈 화면에서 팀을 먼저 개설해주세요.");
                 location.href = "index.html";
@@ -194,14 +186,12 @@
         }
     });
 
-    /* --- [화면 1] 요약 리스트 로드 로직 --- */
     function loadSummaryCards() {
-        if(listListener) listListener(); // 중복 방지
-        // 팀의 모든 체크리스트 데이터를 가져와 현장별로 묶어줌
+        if(listListener) listListener(); 
         listListener = db.collection("punch_lists")
             .where("teamId", "==", myTeamId)
             .onSnapshot(ss => {
-                let sitesData = {}; // { "진영현장": { total: 5, done: 3, lastAt: 123456... } }
+                let sitesData = {}; 
                 
                 ss.docs.forEach(doc => {
                     const d = doc.data();
@@ -211,12 +201,11 @@
                     sitesData[d.siteName].total++;
                     if(d.done) sitesData[d.siteName].done++;
                     if(d.createdAt > sitesData[d.siteName].lastAt) {
-                        sitesData[d.siteName].lastAt = d.createdAt; // 가장 최근에 업데이트된 시간
-                        sitesData[d.siteName].writer = d.writer; // 가장 마지막으로 등록한 사람 기준
+                        sitesData[d.siteName].lastAt = d.createdAt;
+                        sitesData[d.siteName].writer = d.writer;
                     }
                 });
 
-                // 배열로 변환해서 최신순으로 정렬
                 const sortedSites = Object.keys(sitesData).map(key => ({
                     name: key, ...sitesData[key]
                 })).sort((a, b) => b.lastAt - a.lastAt);
@@ -236,7 +225,6 @@
             const pct = s.total === 0 ? 0 : Math.round((s.done / s.total) * 100);
             const barColor = pct === 100 ? 'var(--success-btn)' : 'var(--primary-accent)';
             
-            // onEvent: 카드 클릭 시 디테일 화면으로, X 버튼 클릭 시 이벤트 버블링 막고 삭제
             return `
             <div class="col-md-6 col-lg-4">
                 <div class="summary-card" onclick="openDetailView('${s.name}', '${s.writer}')">
@@ -266,7 +254,6 @@
         }
     }
 
-    /* --- [화면 전환 로직] --- */
     function createOrLoadSite() {
         const val = document.getElementById('searchSiteInput').value.trim();
         if(!val) return alert("현장명을 입력해주세요.");
@@ -279,20 +266,19 @@
         document.getElementById('view-detail').style.display = 'block';
         
         document.getElementById('detailSiteName').innerText = siteName;
-        document.getElementById('detailWriter').innerText = `(작성자: ${userNickname})`; // 현재 접속자 기준 표시
+        document.getElementById('detailWriter').innerText = `(작성자: ${userNickname})`; 
         
         loadDetailChecklist(siteName);
     }
 
     function goBack() {
-        if(detailListener) detailListener(); // 디테일 리스너 끄기
+        if(detailListener) detailListener();
         currentSite = "";
         document.getElementById('searchSiteInput').value = "";
         document.getElementById('view-detail').style.display = 'none';
         document.getElementById('view-list').style.display = 'block';
     }
 
-    /* --- [화면 2] 디테일 데이터 로드 및 렌더링 --- */
     function loadDetailChecklist(siteName) {
         if(detailListener) detailListener();
         detailListener = db.collection("punch_lists")
@@ -301,7 +287,6 @@
             .onSnapshot(ss => {
                 let items = ss.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // 진행률 바 업데이트
                 const total = items.length;
                 const doneCount = items.filter(i => i.done).length;
                 const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
@@ -310,7 +295,6 @@
                 document.getElementById('detailProgressBar').style.width = pct + '%';
                 document.getElementById('detailProgressBar').style.background = pct === 100 ? 'var(--success-btn)' : 'var(--primary-accent)';
 
-                // 정렬 (완료된 건 아래로)
                 items.sort((a, b) => {
                     if (a.done === b.done) return b.createdAt - a.createdAt;
                     return a.done ? 1 : -1;
@@ -339,7 +323,6 @@
         `).join('');
     }
 
-    /* --- [팝업 및 항목 제어 로직] --- */
     function openAddModal() {
         document.getElementById('addTaskModal').style.display = 'flex';
         document.getElementById('newTaskInput').focus();
@@ -358,11 +341,11 @@
             siteName: currentSite,
             text: text,
             done: false,
-            writer: userNickname, // 작성자 이름 자동 기입
+            writer: userNickname,
             createdAt: Date.now()
         });
         
-        closeAddModal(); // 입력 완료 후 팝업 닫기
+        closeAddModal(); 
     }
 
     async function toggleTask(id, currentStatus) { await db.collection("punch_lists").doc(id).update({ done: !currentStatus }); }
