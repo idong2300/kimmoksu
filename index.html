@@ -114,7 +114,6 @@
         #auth-overlay { position: fixed; inset: 0; background: var(--bg-deep); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; }
         
-        /* 스크롤바 커스텀 (숨기거나 얇게) */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-deep); }
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
@@ -266,8 +265,7 @@
                 
                 <div class="d-flex justify-content-between align-items-center mt-5 mb-3 flex-wrap gap-2">
                     <h5 class="fw-bold m-0 text-nowrap"><i class="bi bi-archive me-2"></i>최근 진행 현장</h5>
-                    <div id="punch-card-filter" class="d-flex gap-2 overflow-auto pb-1" style="flex-wrap: nowrap; -webkit-overflow-scrolling: touch;">
-                        </div>
+                    <div id="punch-card-filter" class="d-flex gap-2 overflow-auto pb-1" style="flex-wrap: nowrap; -webkit-overflow-scrolling: touch;"></div>
                 </div>
                 <div id="punch-history-list" class="row g-3"></div>
             </div>
@@ -288,9 +286,11 @@
                     <span class="small fw-bold text-white">마감 달성률</span>
                     <span class="small text-secondary" id="detailProgressText">0% (0/0)</span>
                 </div>
-                <div class="progress-container mb-4" style="height: 6px;">
+                <div class="progress-container mb-3" style="height: 6px;">
                     <div id="detailProgressBar" class="progress-fill"></div>
                 </div>
+
+                <div id="punch-filter-container" class="mb-3 d-flex gap-2 overflow-auto pb-2 border-bottom border-secondary border-opacity-25"></div>
 
                 <div id="checklist-container"></div>
             </div>
@@ -459,9 +459,10 @@
     let punchListListener = null;
     let punchDetailListener = null;
     
-    // [수정 9] 바깥 현장 목록 필터용 전역 변수
     let globalPunchSites = []; 
     let activePunchCardFilter = "전체";
+    let globalPunchItems = []; 
+    let activePunchFilter = "전체";
 
     let t5EditingId = null; let calculatedData = null;
     let siteEditingId = null; let siteModal;
@@ -598,7 +599,7 @@
     async function deleteSite(id) { if(confirm("삭제하시겠습니까?")) await db.collection("site_status").doc(id).delete(); }
 
     /* =========================================
-       [모듈 2] 작업일보
+       [모듈 2] 작업일보 (개방형 스마트 이름표 적용)
     ========================================= */
     function renderAllTeams() {
         const container = document.getElementById('team-container'); const monthVal = document.getElementById('logMonth').value || "2026-04"; const [year, month] = monthVal.split('-').map(Number); const lastDay = new Date(year, month, 0).getDate();
@@ -617,16 +618,42 @@
     function addWorker(tIdx) { teamData[tIdx].workers.push({name:"", days:{}}); renderAllTeams(); }
     function updateWorkerName(tIdx, wIdx, val) { teamData[tIdx].workers[wIdx].name = val; }
     function removeWorker(tIdx, wIdx) { if(confirm("삭제?")) { teamData[tIdx].workers.splice(wIdx, 1); renderAllTeams(); } }
-    async function saveMonthlyLog() { const month = document.getElementById('logMonth').value, site = document.getElementById('siteName').value.trim(); if(!site) return alert("현장명 필수!"); const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), writer: userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).set(data); else await db.collection("monthly_logs").add(data); alert("저장 완료"); location.reload(); }
     
+    // [수정: 개방형 데이터 업데이트 로직]
+    async function saveMonthlyLog() { 
+        const month = document.getElementById('logMonth').value, site = document.getElementById('siteName').value.trim(); 
+        if(!site) return alert("현장명 필수!"); 
+        
+        if(editingId) {
+            const data = { month, site, teamData, updatedAt: Date.now(), lastModifier: userNickname }; 
+            await db.collection("monthly_logs").doc(editingId).update(data); 
+        } else {
+            const data = { teamId: myTeamId, month, site, teamData, updatedAt: Date.now(), originalWriter: userNickname, writer: userNickname }; 
+            await db.collection("monthly_logs").add(data); 
+        }
+        alert("저장 완료"); location.reload(); 
+    }
+    
+    // [수정: 개방형 버튼 & 스마트 이름표 렌더링 로직]
     function loadHistory() { 
         db.collection("monthly_logs").where("teamId","==", myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { 
             document.getElementById('history-list').innerHTML = ss.docs.map(doc => { 
-                const d = doc.data(); const isOwner = (d.writer === userNickname || myRole === "owner"); 
-                let buttonsHTML = isOwner ? `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button>` : '';
-                buttonsHTML += `<button class="t5-btn-small" style="background:var(--primary-accent); color:white;" onclick="copyLog('${doc.id}')">복사</button><button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>`;
-                if(isOwner) buttonsHTML += `<button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>`;
-                return `<div class="col-md-6"><div class="t5-card p-3 d-flex justify-content-between align-items-center m-0"><div><small style="color:var(--primary-accent);">${d.month}</small><br><b class="fs-6">${d.site}</b><br><span class="small text-secondary" style="font-size:0.7rem;"><i class="bi bi-person-fill"></i> ${d.writer || '관리자'}</span></div><div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">${buttonsHTML}</div></div></div>`; 
+                const d = doc.data(); 
+                
+                // 투명 망토(권한 체크) 제거 -> 모두에게 개방
+                let buttonsHTML = `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button>
+                                   <button class="t5-btn-small" style="background:var(--primary-accent); color:white;" onclick="copyLog('${doc.id}')">복사</button>
+                                   <button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>
+                                   <button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>`;
+
+                // 스마트 이름표 로직
+                let origWriter = d.originalWriter || d.writer || '관리자';
+                let writerDisplay = `작성: ${origWriter}`;
+                if (d.lastModifier && d.lastModifier !== origWriter) {
+                    writerDisplay += ` / 최근수정: ${d.lastModifier}`;
+                }
+
+                return `<div class="col-md-6"><div class="t5-card p-3 d-flex justify-content-between align-items-center m-0"><div><small style="color:var(--primary-accent);">${d.month}</small><br><b class="fs-6">${d.site}</b><br><span class="small text-secondary" style="font-size:0.7rem;"><i class="bi bi-person-fill"></i> ${writerDisplay}</span></div><div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">${buttonsHTML}</div></div></div>`; 
             }).join('') || '<p class="text-secondary small ms-2">기록 없음</p>'; 
         }); 
     }
@@ -648,7 +675,6 @@
             });
     }
 
-    // [수정 9] 펀치리스트 외부(카드) 필터 로직
     function renderPunchCardFilterAndList() {
         const writers = ["전체", ...new Set(globalPunchSites.map(s => s.writer).filter(Boolean))];
         document.getElementById('punch-card-filter').innerHTML = writers.map(w => `
@@ -684,7 +710,7 @@
 
     function openDetailView(siteName) {
         currentSite = siteName; document.getElementById('view-list').style.display = 'none'; document.getElementById('view-detail').style.display = 'block';
-        document.getElementById('detailSiteName').innerText = siteName;
+        document.getElementById('detailSiteName').innerText = siteName; activePunchFilter = "전체";
         history.pushState({ page: 'checklist_detail', site: siteName }, "", `#checklist_detail`);
         loadDetailChecklist(siteName);
     }
@@ -709,16 +735,27 @@
     function loadDetailChecklist(siteName) {
         if(punchDetailListener) punchDetailListener();
         punchDetailListener = db.collection("punch_lists").where("teamId", "==", myTeamId).where("siteName", "==", siteName).onSnapshot(ss => {
-                let items = ss.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                const total = items.length; const doneCount = items.filter(i => i.done).length; const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
-                document.getElementById('detailProgressText').innerText = total === 0 ? "0% (0/0)" : `${pct}% (${doneCount}/${total})`;
-                document.getElementById('detailProgressBar').style.width = pct + '%'; document.getElementById('detailProgressBar').style.background = pct === 100 ? 'var(--success-btn)' : 'var(--primary-accent)';
-
-                items.sort((a, b) => { if (a.done === b.done) return b.createdAt - a.createdAt; return a.done ? 1 : -1; });
-                renderDetailList(items); 
+                globalPunchItems = ss.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                globalPunchItems.sort((a, b) => { if (a.done === b.done) return b.createdAt - a.createdAt; return a.done ? 1 : -1; });
+                renderPunchFilterAndList(); 
             });
     }
+
+    function renderPunchFilterAndList() {
+        const writers = ["전체", ...new Set(globalPunchItems.map(i => i.writer))];
+        document.getElementById('punch-filter-container').innerHTML = writers.map(w => `
+            <button class="btn btn-sm ${w === activePunchFilter ? 'btn-primary' : 'btn-outline-secondary border-secondary text-secondary'} rounded-pill px-3 text-nowrap" onclick="setPunchFilter('${w}')">${w}</button>
+        `).join('');
+
+        const filteredItems = activePunchFilter === "전체" ? globalPunchItems : globalPunchItems.filter(i => i.writer === activePunchFilter);
+        const total = globalPunchItems.length; const doneCount = globalPunchItems.filter(i => i.done).length; const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+        document.getElementById('detailProgressText').innerText = total === 0 ? "0% (0/0)" : `${pct}% (${doneCount}/${total})`;
+        document.getElementById('detailProgressBar').style.width = pct + '%'; document.getElementById('detailProgressBar').style.background = pct === 100 ? 'var(--success-btn)' : 'var(--primary-accent)';
+
+        renderDetailList(filteredItems);
+    }
+
+    function setPunchFilter(writer) { activePunchFilter = writer; renderPunchFilterAndList(); }
 
     function renderDetailList(items) {
         const container = document.getElementById('checklist-container');
