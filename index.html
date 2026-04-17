@@ -56,25 +56,16 @@
             .compact-card h6 { font-size: 0.95rem !important; font-weight: 700 !important; }
             .compact-card p { display: none; }
             
-            /* V18: 추가공사 모바일 카드뷰 변환 */
             .mobile-extra-table thead { display: none; }
-            .mobile-extra-table tr { 
-                display: flex; flex-wrap: wrap; align-items: center; 
-                background: #1e222d; margin-bottom: 15px; border-radius: 10px; padding: 12px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            }
+            .mobile-extra-table tr { display: flex; flex-wrap: wrap; align-items: center; background: #1e222d; margin-bottom: 15px; border-radius: 10px; padding: 12px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
             .mobile-extra-table td { border: none !important; padding: 2px !important; display: flex; align-items: center; }
             
-            /* 1층: 내용 & 금액 */
             .desc-td { width: 55%; }
             .cost-td { width: 45%; padding-left: 8px !important; }
-            
-            /* 2층: 일자, 진행, 계산서, 삭제 */
             .date-td { width: 40%; margin-top: 8px; }
             .check-td-prog { width: 20%; margin-top: 8px; justify-content: center; font-size: 0.75rem; color: #94a3b8; }
             .check-td-tax { width: 20%; margin-top: 8px; justify-content: center; font-size: 0.75rem; color: #94a3b8; }
             .del-td { width: 20%; margin-top: 8px; padding-left: 8px !important; }
-            
-            /* 3층: 아코디언 비고 */
             .note-td { width: 100%; margin-top: 10px; display: block !important; }
             .note-header { font-size: 0.8rem; color: #94a3b8; cursor: pointer; display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px; }
         }
@@ -115,7 +106,7 @@
         .day-sun { background-color: rgba(224, 49, 49, 0.08) !important; color: #e03131 !important; }
         .gantt-active { background-color: var(--primary-accent) !important; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); }
         .task-editable { background: transparent; border: none; color: #0dcaf0; font-weight: bold; width: 100%; outline: none; font-size: 0.75rem; }
-
+        
         .excel-table { width: 100%; border-collapse: collapse; background: var(--card-bg); margin-bottom: 10px; table-layout: fixed; border: 2px solid #4b5563; }
         .excel-table td { border: 1px solid #4b5563; text-align: center; height: 38px; font-size: 0.85rem; color: white; padding: 0; }
         .date-row td { height: 22px !important; background: #1e222d; font-size: 0.75rem; color: #94a3b8; font-weight: bold; }
@@ -139,7 +130,9 @@
         .custom-check { width: 24px; height: 24px; cursor: pointer; border-radius: 6px; border: 2px solid var(--primary-accent); appearance: none; position: relative; margin-right: 15px; margin-top: 2px; flex-shrink: 0; background: transparent; }
         .custom-check:checked { background-color: var(--primary-accent); }
         .custom-check:checked::after { content: '✔'; position: absolute; color: white; font-size: 14px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .item-text-area { flex-grow: 1; font-size: 1rem; border: none; background: transparent; color: white; outline: none; resize: none; overflow: hidden; line-height: 1.5; padding: 0; }
+        
+        /* V19: 펀치리스트 오토 리사이즈 지원용 클래스 강화 */
+        .item-text-area { flex-grow: 1; font-size: 1rem; border: none; background: transparent; color: white; outline: none; resize: none; overflow: hidden; line-height: 1.5; padding: 0; min-height: 24px; }
         .btn-del { color: #555; cursor: pointer; padding: 0 5px 0 15px; font-size: 1.2rem; }
         .progress-container { background: #131722; border-radius: 10px; height: 16px; overflow: hidden; position: relative; margin-top: 8px; }
         .progress-fill { background: var(--primary-accent); height: 100%; width: 0%; transition: width 0.4s ease-out; }
@@ -152,7 +145,6 @@
         .memo-card { background: #fff9db; color: #333; padding: 15px; border-radius: 8px; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); position: relative; }
         .memo-card.shared { background: #e3f2fd; border-left: 4px solid #5c7cfa; }
         
-        /* 연차 아코디언 및 바(띠) UI */
         .cal-day-box { background: #1e222d; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; min-height: 60px; padding: 5px; cursor: pointer; transition: 0.2s; position: relative; }
         .cal-day-box:hover { border-color: var(--primary-accent); }
         .cal-date-num { font-size: 0.85rem; font-weight: bold; text-align: left; margin-bottom: 3px; }
@@ -301,9 +293,12 @@
         </section>
 
         <section id="page-status" class="page-section">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <h3 class="fw-bold m-0">종합 상황판 관리</h3>
-                <button class="btn btn-success fw-bold px-4" onclick="openSiteAddModal()">+ 현장 추가</button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-warning fw-bold px-3" id="btnEditStatus" style="display:none;" onclick="toggleStatusEditMode()">편집</button>
+                    <button class="btn btn-success fw-bold px-4" onclick="openSiteAddModal()">+ 현장 추가</button>
+                </div>
             </div>
 
             <div class="t5-card mb-5">
@@ -347,7 +342,7 @@
                     <div class="col-md-7 d-flex justify-content-end gap-1">
                         <button class="btn btn-sm btn-info px-2 fw-bold text-white text-nowrap" onclick="captureGantt()"><i class="bi bi-camera"></i> <span class="d-none d-sm-inline">캡처/공유</span></button>
                         <button class="btn btn-sm btn-success px-2 fw-bold text-nowrap" onclick="saveGantt()">💾 <span class="d-none d-sm-inline">현재 상태 저장</span></button>
-                        <button class="btn btn-sm btn-outline-danger px-2 text-nowrap" onclick="deleteGantt()">삭제</button>
+                        <button class="btn btn-sm btn-outline-danger px-2 text-nowrap" id="btnDeleteGantt" onclick="deleteGantt()" style="display:none;">삭제</button>
                     </div>
                 </div>
                 
@@ -786,6 +781,19 @@
         }
     });
 
+    // V19: 권한 기반 UI 초기화 함수
+    function applyRoleRestrictions() {
+        if(myRole === 'member') {
+            document.getElementById('btnEditStatus').style.display = 'none';
+            document.getElementById('btnDeleteGantt').style.display = 'none';
+        } else {
+            document.getElementById('btnEditStatus').style.display = 'inline-block';
+            document.getElementById('btnDeleteGantt').style.display = 'inline-block';
+        }
+        // 강제로 현재 권한에 맞게 다시 그림
+        if(globalStatusData.length > 0) renderAllSections(globalStatusData);
+    }
+
     auth.onAuthStateChanged(async user => {
         if (user) {
             myEmail = user.email; document.getElementById('auth-overlay').style.display = 'none';
@@ -799,6 +807,8 @@
                 else if(tData.admins && tData.admins.includes(myEmail)) myRole = "admin";
                 else myRole = "member";
                 document.getElementById('userRoleDisplay').innerText = myRole === "owner" ? "에디터 (최고권한)" : (myRole === "admin" ? "관리자" : "팀원");
+
+                applyRoleRestrictions(); // V19
 
                 const members = tData.members || [];
                 await Promise.all(members.map(async m => {
@@ -835,20 +845,38 @@
         else { let today = new Date(); let dStr = `0${today.getMonth()+1}`.slice(-2)+"."+`0${today.getDate()}`.slice(-2); await db.collection("board_memos").add({ teamId: myTeamId, type: type, text: text, dateStr: dStr, createdAt: Date.now() }); }
         input.value = '';
     }
-    async function delOldNotice(id) { if(confirm("삭제할까요?")) await db.collection("notices").doc(id).delete(); }
-    async function delBoardItem(id) { if(confirm("삭제할까요?")) await db.collection("board_memos").doc(id).delete(); }
+    async function delOldNotice(id) { if(confirm("삭제하시겠습니까?")) await db.collection("notices").doc(id).delete(); }
+    async function delBoardItem(id) { if(confirm("삭제하시겠습니까?")) await db.collection("board_memos").doc(id).delete(); }
 
-    // 상황판
+    // 상황판 (V19: 편집 모드 관리)
     let siteEditingId = null;
-    function loadAllStatusData() { db.collection("site_status").where("teamId", "==", myTeamId).onSnapshot(ss => { const data = ss.docs.map(doc => ({ id: doc.id, ...doc.data() })); data.sort((a,b) => a.createdAt - b.createdAt); renderAllSections(data); }); }
+    let globalStatusData = [];
+    let isStatusEditMode = false;
+
+    function toggleStatusEditMode() {
+        isStatusEditMode = !isStatusEditMode;
+        document.getElementById('btnEditStatus').classList.toggle('active', isStatusEditMode);
+        renderAllSections(globalStatusData);
+    }
+
+    function loadAllStatusData() { 
+        db.collection("site_status").where("teamId", "==", myTeamId).onSnapshot(ss => { 
+            globalStatusData = ss.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.createdAt - b.createdAt); 
+            renderAllSections(globalStatusData); 
+        }); 
+    }
+    
     function renderAllSections(data) {
         const sections = [{ key: 'ongoing', icon: 'bi-tools', title: '공사 진행 중', h: '<tr><th style="width:18%;">현장명</th><th style="width:12%;">착공일</th><th style="width:12%;">예정준공일</th><th style="width:12%;">소장</th><th style="width:12%;">디자이너</th><th style="width:12%;">싸인</th><th>비고</th><th style="width:60px;"></th></tr>' }, { key: 'scheduled', icon: 'bi-calendar-event', title: '공사 착공 예정', h: '<tr><th style="width:20%;">상호명</th><th style="width:15%;">착공예정</th><th style="width:15%;">준공예정</th><th style="width:15%;">예상소장</th><th>비고</th><th style="width:60px;"></th></tr>' }, { key: 'designing', icon: 'bi-palette', title: '디자인 진행 중', h: '<tr><th style="width:20%;">상호명</th><th style="width:15%;">디자인마감</th><th style="width:15%;">착공예정</th><th style="width:15%;">디자이너</th><th>비고</th><th style="width:60px;"></th></tr>' }, { key: 'pre-design', icon: 'bi-pencil-square', title: '디자인 예정', h: '<tr><th style="width:25%;">상호명</th><th style="width:20%;">마감시기</th><th>비고</th><th style="width:60px;"></th></tr>' }];
+        
         document.getElementById('all-status-containers').innerHTML = sections.map(sec => {
             const items = data.filter(d => d.status === sec.key);
-            let tableRows = items.length === 0 ? `<tr><td colspan="10" class="text-secondary py-4">등록된 데이터가 없습니다.</td></tr>` : items.map(item => `<tr><td class="fw-bold" style="color:var(--primary-accent);">${item.siteName}</td><td>${item.date1 || '-'}</td>${sec.key !== 'pre-design' ? `<td>${item.date2 || '-'}</td>` : ''}${sec.key === 'ongoing' ? `<td>${item.site_manager || '-'}</td><td>${item.designer || '-'}</td><td>${item.designer_sign || '-'}</td>` : ''}${sec.key === 'scheduled' ? `<td>${item.site_manager || '-'}</td>` : ''}${sec.key === 'designing' ? `<td>${item.designer || '-'}</td>` : ''}<td class="text-secondary text-start ps-3">${item.etc || '-'}</td><td><i class="bi bi-pencil-square text-primary cursor-pointer" onclick="openSiteEditModal('${item.id}')"></i></td></tr>`).join('');
+            
+            // V19: 삭제 버튼은 isStatusEditMode일 때만 렌더링
+            let tableRows = items.length === 0 ? `<tr><td colspan="10" class="text-secondary py-4">등록된 데이터가 없습니다.</td></tr>` : items.map(item => `<tr><td class="fw-bold" style="color:var(--primary-accent);">${item.siteName}</td><td>${item.date1 || '-'}</td>${sec.key !== 'pre-design' ? `<td>${item.date2 || '-'}</td>` : ''}${sec.key === 'ongoing' ? `<td>${item.site_manager || '-'}</td><td>${item.designer || '-'}</td><td>${item.designer_sign || '-'}</td>` : ''}${sec.key === 'scheduled' ? `<td>${item.site_manager || '-'}</td>` : ''}${sec.key === 'designing' ? `<td>${item.designer || '-'}</td>` : ''}<td class="text-secondary text-start ps-3">${item.etc || '-'}</td><td><i class="bi bi-pencil-square text-primary cursor-pointer me-2" onclick="openSiteEditModal('${item.id}')"></i> ${isStatusEditMode ? `<i class="bi bi-trash3 text-danger cursor-pointer" onclick="deleteSite('${item.id}')"></i>` : ''}</td></tr>`).join('');
             
             let cards = items.length === 0 ? `<p class="text-center text-secondary py-3 small" style="background:#1e222d; border-radius:12px;">등록된 데이터가 없습니다.</p>` : items.map(item => {
-                const btnHTML = `<div><button class="btn btn-sm text-primary p-1" onclick="openSiteEditModal('${item.id}')"><i class="bi bi-pencil-square fs-5"></i></button><button class="btn btn-sm text-danger p-1" onclick="deleteSite('${item.id}')"><i class="bi bi-trash3 fs-5"></i></button></div>`;
+                const btnHTML = `<div><button class="btn btn-sm text-primary p-1" onclick="openSiteEditModal('${item.id}')"><i class="bi bi-pencil-square fs-5"></i></button>${isStatusEditMode ? `<button class="btn btn-sm text-danger p-1 ms-1" onclick="deleteSite('${item.id}')"><i class="bi bi-trash3 fs-5"></i></button>` : ''}</div>`;
                 let etcHTML = ''; if(item.etc) { if(sec.key === 'pre-design') etcHTML = `<div class="text-secondary small mt-2 text-truncate">${item.etc}</div>`; else { const cid = `etc-${item.id}`; etcHTML = `<div class="text-secondary small mt-2 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#${cid}"><i class="bi bi-chat-square-text"></i> 메모 보기 <i class="bi bi-chevron-down"></i></div><div class="collapse" id="${cid}"><div class="mt-2 text-secondary small bg-dark p-2 rounded">${item.etc}</div></div>`; } }
                 
                 let dateStr = "";
@@ -868,22 +896,19 @@
             return `<div class="mb-5"><div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold m-0"><i class="bi ${sec.icon} me-2 text-primary"></i>${sec.title} <span class="badge rounded-pill bg-dark ms-2" style="font-size:0.7rem;">${items.length}건</span></h5><button class="btn btn-sm btn-outline-success px-3 fw-bold" onclick="openSiteAddModal('${sec.key}')">+ 추가</button></div><div class="d-none d-md-block t5-card p-0 overflow-hidden"><table class="status-table"><thead>${sec.h}</thead><tbody>${tableRows}</tbody></table></div><div class="d-md-none">${cards}</div></div>`;
         }).join('');
     }
+    
     function openSiteAddModal(targetStatus = 'ongoing') { siteEditingId = null; document.getElementById('modalTitle').innerText = "신규 현장 등록"; document.getElementById('siteForm').querySelectorAll('input, textarea').forEach(i => i.value = ''); document.getElementById('f_status').value = targetStatus; toggleSiteFormFields(targetStatus); siteModal.show(); }
     async function openSiteEditModal(id) { siteEditingId = id; document.getElementById('modalTitle').innerText = "데이터 수정 및 단계 변경"; const d = (await db.collection("site_status").doc(id).get()).data(); document.getElementById('f_status').value = d.status; document.getElementById('f_siteName').value = d.siteName; document.getElementById('f_date1').value = d.date1 || ''; document.getElementById('f_date2').value = d.date2 || ''; document.getElementById('f_site_manager').value = d.site_manager || ''; document.getElementById('f_designer').value = d.designer || ''; document.getElementById('f_designer_sign').value = d.designer_sign || ''; document.getElementById('f_etc').value = d.etc || ''; toggleSiteFormFields(d.status); siteModal.show(); }
     function handleStatusChange(val) { document.getElementById('f_date1').value = ''; document.getElementById('f_date2').value = ''; document.getElementById('f_site_manager').value = ''; document.getElementById('f_designer').value = ''; document.getElementById('f_designer_sign').value = ''; toggleSiteFormFields(val); }
     function toggleSiteFormFields(val) { const d1 = document.getElementById('f_date1'), d2 = document.getElementById('f_date2'), siteM = document.getElementById('f_site_manager'), desM = document.getElementById('f_designer'), signM = document.getElementById('ongoing_only'); if(val === 'ongoing') { d1.placeholder = "착공일"; d2.placeholder = "준공예정일"; siteM.parentElement.style.display = 'block'; desM.parentElement.style.display = 'block'; signM.style.display = 'block'; } else if(val === 'scheduled') { d1.placeholder = "착공예정"; d2.placeholder = "준공예정"; siteM.parentElement.style.display = 'block'; desM.parentElement.style.display = 'none'; signM.style.display = 'none'; } else if(val === 'designing') { d1.placeholder = "디자인마감"; d2.placeholder = "착공예정"; siteM.parentElement.style.display = 'none'; desM.parentElement.style.display = 'block'; signM.style.display = 'none'; } else { d1.placeholder = "마감시기 (예: 4월 말)"; d2.style.display = 'none'; siteM.parentElement.style.display = 'none'; desM.parentElement.style.display = 'none'; signM.style.display = 'none'; } }
     async function saveSiteData() { const data = { teamId: myTeamId, status: document.getElementById('f_status').value, siteName: document.getElementById('f_siteName').value.trim(), date1: document.getElementById('f_date1').value, date2: document.getElementById('f_date2').value, site_manager: document.getElementById('f_site_manager').value, designer: document.getElementById('f_designer').value, designer_sign: document.getElementById('f_designer_sign').value, etc: document.getElementById('f_etc').value, updatedAt: Date.now() }; if(!data.siteName) return alert("현장명을 입력해주세요."); if(siteEditingId) await db.collection("site_status").doc(siteEditingId).update(data); else await db.collection("site_status").add({ ...data, createdAt: Date.now() }); siteModal.hide(); }
-    async function deleteSite(id) { if(confirm("삭제하시겠습니까?")) await db.collection("site_status").doc(id).delete(); }
+    async function deleteSite(id) { if(confirm("이 현장을 삭제하시겠습니까?")) await db.collection("site_status").doc(id).delete(); }
 
-    // 공정표 (V18: 1일 축소 추가 및 콤마 포맷팅)
+    // 공정표 (Gantt)
     let ganttTasks = ["철거", "목공", "전기", "필름", "도장", "소방", "가구", "바닥", "유리", "금속", "사인", "설비", "청소", "기타 잔손"];
     let ganttDates = []; let ganttState = {}; let currentGanttId = null;
     
-    // V18: 금액 콤마 자동 입력 함수
-    function formatComma(input) {
-        let val = input.value.replace(/[^0-9]/g, '');
-        input.value = val ? Number(val).toLocaleString() : '';
-    }
+    function formatComma(input) { let val = input.value.replace(/[^0-9]/g, ''); input.value = val ? Number(val).toLocaleString() : ''; }
 
     function openGanttCreateModal() { document.getElementById('newGanttName').value = ''; document.getElementById('newGanttDate').value = ''; ganttModal.show(); }
     function submitNewProject() {
@@ -911,7 +936,7 @@
     function toggleGantt(key) { ganttState[key] = !ganttState[key]; renderGantt(); }
     function addGanttTaskRow() { ganttTasks.push("새 공종"); renderGantt(); }
     function addGanttDate() { let lastD = new Date(ganttDates[ganttDates.length-1]); lastD.setDate(lastD.getDate() + 1); ganttDates.push(lastD); renderGantt(); }
-    function removeGanttDate() { if(ganttDates.length > 1) { ganttDates.pop(); renderGantt(); } } // V18 신설
+    function removeGanttDate() { if(ganttDates.length > 1) { ganttDates.pop(); renderGantt(); } } 
 
     function captureGantt() {
         const area = document.getElementById('captureArea'); const wrap = document.getElementById('ganttScrollWrapper'); let sn = document.getElementById('ganttSiteName').value.trim() || '현장';
@@ -924,7 +949,6 @@
         }, 200); 
     }
     
-    // V18: 추가공사 모바일 커스텀 카드뷰 및 콤마 적용
     function addExtraCostRow(data = {}) {
         const tr = document.createElement('tr');
         let id = Date.now() + Math.floor(Math.random()*1000);
@@ -933,12 +957,10 @@
         tr.innerHTML = `
             <td class="desc-td"><input type="text" class="form-control form-control-sm input-dark ec-desc" placeholder="내용 (예: PC박스 추가)" value="${data.desc||''}"></td>
             <td class="cost-td"><input type="text" class="form-control form-control-sm input-dark text-end ec-cost" oninput="formatComma(this); calcExtraSum()" value="${costVal}" placeholder="금액(원)"></td>
-            
             <td class="date-td"><input type="date" class="form-control form-control-sm input-dark ec-date" value="${data.date||''}"></td>
             <td class="check-td-prog"><label class="d-md-none me-1">진행</label><input class="form-check-input ec-prog" type="checkbox" ${data.prog?'checked':''}></td>
             <td class="check-td-tax"><label class="d-md-none me-1">계산서</label><input class="form-check-input ec-tax" type="checkbox" ${data.tax?'checked':''}></td>
             <td class="del-td"><button class="btn btn-sm btn-outline-danger py-0 px-2 w-100" onclick="this.closest('tr').remove(); calcExtraSum();"><i class="bi bi-x"></i> <span class="d-md-none">삭제</span></button></td>
-            
             <td class="note-td">
                 <div class="d-md-none note-header" data-bs-toggle="collapse" data-bs-target="#note-${id}">비고 (메모) <i class="bi bi-chevron-down"></i></div>
                 <div class="collapse d-md-block" id="note-${id}"><input type="text" class="form-control form-control-sm input-dark ec-note mt-2 mt-md-0" placeholder="메모를 입력하세요" value="${data.note||''}"></div>
@@ -949,10 +971,7 @@
     
     function calcExtraSum() { 
         let s = 0; 
-        document.querySelectorAll('.ec-cost').forEach(el => {
-            let v = el.value.replace(/,/g, '');
-            s += parseInt(v || 0);
-        }); 
+        document.querySelectorAll('.ec-cost').forEach(el => { let v = el.value.replace(/,/g, ''); s += parseInt(v || 0); }); 
         document.querySelectorAll('.extraTotalSumText').forEach(el => el.innerText = s.toLocaleString() + " 원"); 
     }
     
@@ -961,7 +980,7 @@
         let extra = []; document.querySelectorAll('#extraCostBody tr').forEach(tr => extra.push({ 
             date: tr.querySelector('.ec-date').value, 
             desc: tr.querySelector('.ec-desc').value, 
-            cost: tr.querySelector('.ec-cost').value.replace(/,/g, ''), // V18: 콤마 제거 후 저장
+            cost: tr.querySelector('.ec-cost').value.replace(/,/g, ''),
             prog: tr.querySelector('.ec-prog').checked, 
             tax: tr.querySelector('.ec-tax').checked, 
             note: tr.querySelector('.ec-note').value 
@@ -983,7 +1002,7 @@
     }
     
     async function loadGanttDoc(id) { const d = (await db.collection("gantt_logs").doc(id).get()).data(); currentGanttId = id; document.getElementById('ganttSiteName').value = d.site; ganttTasks = d.tasks; ganttState = d.state; ganttDates = d.dates.map(str => new Date(str)); document.getElementById('extraCostBody').innerHTML = ''; d.extra.forEach(ex => addExtraCostRow(ex)); document.getElementById('ganttDashboard').style.display = 'block'; renderGantt(); calcExtraSum(); window.scrollTo(0,0); }
-    async function deleteGantt() { if(confirm("삭제할까요?")) { if(currentGanttId) await db.collection("gantt_logs").doc(currentGanttId).delete(); document.getElementById('ganttDashboard').style.display = 'none'; currentGanttId=null; } }
+    async function deleteGantt() { if(confirm("이 공정표를 삭제하시겠습니까?")) { if(currentGanttId) await db.collection("gantt_logs").doc(currentGanttId).delete(); document.getElementById('ganttDashboard').style.display = 'none'; currentGanttId=null; } }
 
     // 작업일보
     let editingId = null; let teamData = [{ teamName: "목공팀", workers: [] }];
@@ -1010,12 +1029,16 @@
     function bindLongPress() { document.querySelectorAll('.gongsu-cell').forEach(cell => { let timer; cell.onmousedown=cell.ontouchstart=()=>timer=setTimeout(()=>{ const { t, w, d } = cell.dataset; const input = prompt("공수", teamData[t].workers[w].days[d]); if(input!==null){ teamData[t].workers[w].days[d]=input; renderAllTeams(); } }, 600); cell.onmouseup=cell.ontouchend=()=>clearTimeout(timer); }); }
     function addTeam() { const n = prompt("공정명"); if(n){ teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
     function addWorker(t) { teamData[t].workers.push({name:"", days:{}}); renderAllTeams(); }
-    function removeWorker(t, w) { if(confirm("삭제?")){ teamData[t].workers.splice(w,1); renderAllTeams(); } }
+    function removeWorker(t, w) { if(confirm("삭제하시겠습니까?")){ teamData[t].workers.splice(w,1); renderAllTeams(); } }
     async function saveMonthlyLog() { const m = document.getElementById('logMonth').value, s = document.getElementById('siteName').value; if(!s) return; const d = { teamId:myTeamId, month:m, site:s, teamData, updatedAt:Date.now(), lastModifier:userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).update(d); else await db.collection("monthly_logs").add({...d, originalWriter:userNickname}); alert("저장 완료"); location.reload(); }
-    function loadWorklogs() { db.collection("monthly_logs").where("teamId","==",myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { document.getElementById('history-list').innerHTML = ss.docs.map(doc => { const d = doc.data(); let btnHtml = `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button><button class="t5-btn-small bg-primary text-white" onclick="copyLog('${doc.id}')">복사</button><button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button><button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>`; return `<div class="col-md-6"><div class="t5-card p-3 m-0 d-flex justify-content-between align-items-center"><div><b class="text-primary">${d.month}</b><br>${d.site}<br><span class="small text-secondary">작성: ${d.originalWriter||'관리자'} ${d.lastModifier?`/ 수정: ${d.lastModifier}`:''}</span></div><div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">${btnHtml}</div></div></div>`; }).join(''); }); }
+    function loadWorklogs() { db.collection("monthly_logs").where("teamId","==",myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { document.getElementById('history-list').innerHTML = ss.docs.map(doc => { const d = doc.data(); 
+        // V19: 권한 기반 삭제 버튼 노출
+        let delBtnHtml = (myRole !== 'member') ? `<button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>` : '';
+        let btnHtml = `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button><button class="t5-btn-small bg-primary text-white" onclick="copyLog('${doc.id}')">복사</button><button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>${delBtnHtml}`; 
+        return `<div class="col-md-6"><div class="t5-card p-3 m-0 d-flex justify-content-between align-items-center"><div><b class="text-primary">${d.month}</b><br>${d.site}<br><span class="small text-secondary">작성: ${d.originalWriter||'관리자'} ${d.lastModifier?`/ 수정: ${d.lastModifier}`:''}</span></div><div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">${btnHtml}</div></div></div>`; }).join(''); }); }
     async function editLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = d.teamData; showPage('worklog'); renderAllTeams(); window.scrollTo(0,0); }
     async function copyLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = d.teamData; showPage('worklog'); renderAllTeams(); alert("데이터가 복사되었습니다."); window.scrollTo(0,0); }
-    async function deleteLog(id) { if(confirm("이 작업일보를 완전히 삭제할까요?")) { await db.collection("monthly_logs").doc(id).delete(); } }
+    async function deleteLog(id) { if(confirm("이 작업일보를 완전히 삭제하시겠습니까?")) { await db.collection("monthly_logs").doc(id).delete(); } }
     async function exportToExcel(id) { 
         const d_raw = (await db.collection("monthly_logs").doc(id).get()).data(); const [year, monthNum] = d_raw.month.split('-'); const lastDayNum = new Date(year, monthNum, 0).getDate(); 
         const wb = XLSX.utils.book_new(); const wsData = Array.from({ length: 5 }, () => Array(36).fill("")); 
@@ -1041,7 +1064,26 @@
     function goBackToPunchList() { if(punchDetailListener) punchDetailListener(); currentSite = ""; document.getElementById('view-detail').style.display = 'none'; document.getElementById('view-list').style.display = 'block'; }
     async function editPunchlistTitle() { const newTitle = prompt("새로운 현장명을 입력하세요", currentSite); if(!newTitle || newTitle === currentSite) return; const qs = await db.collection("punch_lists").where("teamId", "==", myTeamId).where("siteName", "==", currentSite).get(); const batch = db.batch(); qs.forEach(doc => batch.update(doc.ref, {siteName: newTitle})); await batch.commit(); alert("수정되었습니다."); document.getElementById('detailSiteName').innerText = newTitle; currentSite = newTitle; loadDetailChecklist(newTitle); }
     function loadDetailChecklist(siteName) { if(punchDetailListener) punchDetailListener(); punchDetailListener = db.collection("punch_lists").where("teamId", "==", myTeamId).where("siteName", "==", siteName).onSnapshot(ss => { globalPunchItems = ss.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b)=>a.done?1:-1); renderPunchFilterAndList(); }); }
-    function renderPunchFilterAndList() { document.getElementById('punch-filter-container').innerHTML = ["전체", ...new Set(globalPunchItems.map(i => i.writer))].map(w => `<button class="btn btn-sm ${w === activePunchFilter ? 'btn-primary' : 'btn-outline-secondary text-secondary'} rounded-pill px-3" onclick="activePunchFilter='${w}'; renderPunchFilterAndList();">${w}</button>`).join(''); const filteredItems = activePunchFilter === "전체" ? globalPunchItems : globalPunchItems.filter(i => i.writer === activePunchFilter); const pct = globalPunchItems.length===0?0:Math.round((globalPunchItems.filter(i=>i.done).length/globalPunchItems.length)*100); document.getElementById('detailProgressText').innerText = `${pct}%`; document.getElementById('detailProgressBar').style.width = pct + '%'; document.getElementById('checklist-container').innerHTML = filteredItems.map(item => `<div class="check-item ${item.done ? 'completed' : ''}"><input type="checkbox" class="custom-check" ${item.done ? 'checked' : ''} onclick="db.collection('punch_lists').doc('${item.id}').update({done:${!item.done}})"><textarea class="item-text-area" rows="1" onchange="db.collection('punch_lists').doc('${item.id}').update({text:this.value})">${item.text}</textarea><i class="bi bi-x-lg btn-del" onclick="if(confirm('삭제?')) db.collection('punch_lists').doc('${item.id}').delete()"></i></div>`).join(''); }
+    
+    // V19: 펀치리스트 오토리사이즈 & 삭제 팝업 문구 수정
+    function renderPunchFilterAndList() { 
+        document.getElementById('punch-filter-container').innerHTML = ["전체", ...new Set(globalPunchItems.map(i => i.writer))].map(w => `<button class="btn btn-sm ${w === activePunchFilter ? 'btn-primary' : 'btn-outline-secondary text-secondary'} rounded-pill px-3" onclick="activePunchFilter='${w}'; renderPunchFilterAndList();">${w}</button>`).join(''); 
+        const filteredItems = activePunchFilter === "전체" ? globalPunchItems : globalPunchItems.filter(i => i.writer === activePunchFilter); 
+        const pct = globalPunchItems.length===0?0:Math.round((globalPunchItems.filter(i=>i.done).length/globalPunchItems.length)*100); 
+        document.getElementById('detailProgressText').innerText = `${pct}%`; 
+        document.getElementById('detailProgressBar').style.width = pct + '%'; 
+        
+        document.getElementById('checklist-container').innerHTML = filteredItems.map(item => `
+            <div class="check-item ${item.done ? 'completed' : ''}">
+                <input type="checkbox" class="custom-check" ${item.done ? 'checked' : ''} onclick="db.collection('punch_lists').doc('${item.id}').update({done:${!item.done}})">
+                <textarea class="item-text-area" rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';" onchange="db.collection('punch_lists').doc('${item.id}').update({text:this.value})">${item.text}</textarea>
+                <i class="bi bi-x-lg btn-del" onclick="if(confirm('삭제하시겠습니까?')) db.collection('punch_lists').doc('${item.id}').delete()"></i>
+            </div>`).join(''); 
+            
+        // 렌더링 직후 높이 자동 맞춤
+        setTimeout(() => { document.querySelectorAll('.item-text-area').forEach(el => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }); }, 50);
+    }
+    
     function openPunchAddModal() { document.getElementById('addTaskModal').style.display = 'flex'; document.getElementById('newTaskInput').value = ''; }
     function closePunchAddModal() { document.getElementById('addTaskModal').style.display = 'none'; }
     async function saveNewPunchTask() { const t = document.getElementById('newTaskInput').value.trim(); if(!t) return; await db.collection("punch_lists").add({ teamId: myTeamId, siteName: currentSite, text: t, done: false, writer: userNickname, createdAt: Date.now() }); closePunchAddModal(); }
@@ -1064,7 +1106,7 @@
     async function editT5Log(id) { const d = (await db.collection("t5_logs").doc(id).get()).data(); t5EditingId = id; document.getElementById('t5-site-title').value = d.siteName; const container = document.getElementById('t5-input-container'); container.innerHTML = ''; d.rows.forEach(r => { let div = document.createElement('div'); div.className = "row g-2 mb-2 t5-row-item"; div.innerHTML = `<div class="col-6"><input type="text" class="form-control input-dark t5-section-name" value="${r.section}"></div><div class="col-6"><input type="number" class="form-control input-dark t5-length-val" value="${r.length}"></div>`; container.appendChild(div); }); showPage('t5'); window.scrollTo(0,0); }
     async function copyAndNewT5Log(id) { const d = (await db.collection("t5_logs").doc(id).get()).data(); t5EditingId = null; document.getElementById('t5-site-title').value = d.siteName + " (복사)"; const container = document.getElementById('t5-input-container'); container.innerHTML = ''; d.rows.forEach(r => { let div = document.createElement('div'); div.className = "row g-2 mb-2 t5-row-item"; div.innerHTML = `<div class="col-6"><input type="text" class="form-control input-dark t5-section-name" value="${r.section}"></div><div class="col-6"><input type="number" class="form-control input-dark t5-length-val" value="${r.length}"></div>`; container.appendChild(div); }); showPage('t5'); alert("복사되었습니다."); window.scrollTo(0,0); }
     function copyT5Order(site, text) { const fmt = site + '\n' + text.split(' / ').join('\n'); const t = document.createElement("textarea"); document.body.appendChild(t); t.value = fmt; t.select(); document.execCommand('copy'); document.body.removeChild(t); alert("복사 완료!\n\n" + fmt); }
-    async function deleteT5Log(id) { if(confirm("삭제할까요?")) await db.collection("t5_logs").doc(id).delete(); }
+    async function deleteT5Log(id) { if(confirm("삭제하시겠습니까?")) await db.collection("t5_logs").doc(id).delete(); }
 
     // 메모장
     let currentMemoTab = 'private';
@@ -1077,9 +1119,9 @@
     }
     function switchMemoTab(tab) { currentMemoTab = tab; document.querySelectorAll('#memoTabs .nav-link').forEach(l => l.classList.remove('active')); event.target.classList.add('active'); loadMemos(); }
     async function addMemo() { let t = prompt("메모 내용 (앞에 [공용] 이라고 적으면 전체 공유 보드에 저장됩니다)"); if(!t) return; let type = t.startsWith("[공용]") ? 'shared' : 'private'; let dStr = new Date().toISOString().split('T')[0]; await db.collection("team_memos").add({ teamId: myTeamId, type, text: t, writer: myEmail, dateStr: dStr, createdAt: Date.now() }); switchMemoTab(type); }
-    async function delMemo(id) { if(confirm("삭제?")) await db.collection("team_memos").doc(id).delete(); }
+    async function delMemo(id) { if(confirm("삭제하시겠습니까?")) await db.collection("team_memos").doc(id).delete(); }
 
-    // 연차 관리 (V18: 추가 부여 연동)
+    // 연차 관리
     let teamMembersInfo = {}; let globalLeaveRecords = [];
     function loadLeaveData(teamData) {
         teamMembersInfo = teamData.membersInfo || {};
