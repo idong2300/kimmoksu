@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>김목수이야기 - 통합 스케줄러 (V26)</title>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="김목수이야기 - 마스터 스케줄러">
+    <meta property="og:description" content="전체 현장 일정을 한눈에 확인하세요.">
+    <meta property="og:image" content="https://idong2300.github.io/kimmoksu/og-image.png">
+    <meta property="og:locale" content="ko_KR">
+
+    <title>김목수이야기 - 통합 스케줄러 (V27)</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -31,7 +37,6 @@
         .cal-border-wrap { border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; }
         .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; background: #1e222d; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 0; font-size: 0.9rem; }
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: rgba(255,255,255,0.1); gap: 1px; } 
-        /* 💡 V26: 달력 세로 칸 늘리기 💡 */
         .cal-day { background: #1e222d; min-height: 140px; padding: 6px 0; cursor: pointer; transition: 0.2s; position: relative; display: flex; flex-direction: column; gap: 2px; }
         .cal-day:hover, .cal-day.selected { background: rgba(92, 124, 250, 0.1); }
         .cal-date-num { font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; padding-left: 8px; }
@@ -41,7 +46,6 @@
         .event-end { border-top-right-radius: 4px; border-bottom-right-radius: 4px; margin-right: 4px; width: calc(100% - 4px); }
         .event-single { border-radius: 4px; margin: 0 4px; width: calc(100% - 8px); }
         
-        /* 💡 V26: 인라인 체크박스 & 더보기 버튼 💡 */
         .cal-inline-check { margin-right: 5px; cursor: pointer; transform: scale(1.1); flex-shrink: 0; }
         .more-btn { font-size: 0.7rem; color: var(--primary-accent); text-align: left; padding-left: 8px; font-weight: bold; cursor: pointer; margin-top: 2px; }
         .more-btn:hover { text-decoration: underline; }
@@ -62,7 +66,6 @@
         .modal-box { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-backdrop-custom { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
 
-        /* 💡 V26: 화이트(데이) 모드 대응 💡 */
         body.light-mode { background-color: #f4f6f8; color: #212529; }
         body.light-mode .main-container { background-color: #f4f6f8; }
         body.light-mode .sidebar { background-color: #ffffff; border-right: 1px solid #dee2e6; }
@@ -93,9 +96,8 @@
 <div id="auth-overlay" style="display: none; position: fixed; inset: 0; background: var(--bg-deep); z-index: 9999; align-items: center; justify-content: center;">
     <div class="t5-card text-center" style="width: 100%; max-width: 380px;">
         <h3 class="mb-4 fw-bold">스케줄러 접속</h3>
-        <input type="email" id="userEmail" class="form-control input-dark mb-3" placeholder="이메일">
-        <input type="password" id="userPw" class="form-control input-dark mb-4" placeholder="비밀번호">
-        <button class="btn btn-primary w-100 py-2 fw-bold" onclick="handleAuth()">접속하기</button>
+        <p class="text-secondary small">접근 권한이 없습니다. 메인 화면에서 로그인해주세요.</p>
+        <button class="btn btn-primary w-100 py-2 fw-bold" onclick="location.href='index.html'">메인 화면으로 이동</button>
     </div>
 </div>
 
@@ -112,6 +114,8 @@
             <div class="nav-link" onclick="location.href='index.html#worklog'"><i class="bi bi-journal-text"></i> 작업일보</div>
             <div class="nav-link" onclick="location.href='index.html#punch'"><i class="bi bi-ui-checks"></i> 펀치리스트</div>
             <div class="nav-link" onclick="location.href='index.html#t5'"><i class="bi bi-calculator"></i> T5 계산기</div>
+            <div class="nav-link" onclick="location.href='index.html#leave'"><i class="bi bi-calendar2-check"></i> 연차 관리</div>
+            <div class="nav-link" onclick="location.href='index.html#profile'"><i class="bi bi-person-gear"></i> 내 정보 수정</div>
         </div>
         <div class="px-4 py-3 mt-auto">
             <button class="btn btn-outline-secondary btn-sm w-100 d-flex justify-content-center align-items-center gap-2" id="themeToggleBtn" onclick="toggleTheme()">
@@ -214,8 +218,7 @@
     <div class="modal-box">
         <h5 class="fw-bold mb-4 text-white">달력 태그 색상 편집</h5>
         <p class="small text-secondary mb-3">설정한 색상은 팀원 모두에게 적용됩니다.</p>
-        <div class="row g-2 mb-4" id="colorInputContainer">
-            </div>
+        <div class="row g-2 mb-4" id="colorInputContainer"></div>
         <div class="d-flex gap-2 mt-2">
             <button class="btn btn-secondary w-50 py-2 fw-bold" onclick="document.getElementById('colorModal').style.display='none'">취소</button>
             <button class="btn btn-primary w-50 py-2 fw-bold" onclick="saveThemeColors()">저장하기</button>
@@ -231,7 +234,6 @@
     let allEvents = []; 
     let eventStorage = { gantt:[], status:[], leave:[], custom:[] };
     
-    // 💡 V26: 다중 필터 & 커스텀 색상 💡
     let activeFilters = new Set(['all']);
     let defaultColors = { gantt:'#0d6efd', status:'#20c997', leave:'#dc3545', construct:'#6f42c1', measure:'#fd7e14', meeting:'#198754', memo:'#6c757d' };
     let themeColors = { ...defaultColors };
@@ -277,11 +279,6 @@
         } else { document.getElementById('auth-overlay').style.display = 'flex'; }
     });
 
-    async function handleAuth() { 
-        const e=document.getElementById('userEmail').value, p=document.getElementById('userPw').value; 
-        try { await auth.signInWithEmailAndPassword(e,p); } catch(err){alert(err.message);} 
-    }
-
     function toggleTheme() {
         let isLight = document.body.classList.toggle('light-mode');
         localStorage.setItem('kimmoksu_theme', isLight ? 'light' : 'dark');
@@ -294,7 +291,6 @@
         else { btn.innerHTML = '<i class="bi bi-brightness-high-fill"></i> <span>화이트 모드로 전환</span>'; btn.classList.replace('btn-outline-dark', 'btn-outline-secondary'); }
     }
 
-    // 💡 V26: 스마트 날짜 파서 (상황판 데이터 규격 강제 변환) 💡
     function parseDateObj(str) {
         if (!str) return null;
         let s = str.replace(/[^0-9]/g, '');
@@ -332,8 +328,8 @@
             ss.docs.forEach(doc => {
                 let d = doc.data();
                 let nick = globalEmailToNick[d.userEmail] || d.userEmail.split('@')[0];
-                // 💡 V26: 반차 데이터 삽입 💡
-                leaves.push({ id: doc.id, type: 'leave', leaveType: d.type, title: `[휴가] ${nick}`, start: d.date, source: 'leave' });
+                // 💡 V27: 연차, 오전반차, 오후반차 정확한 텍스트 매핑 💡
+                leaves.push({ id: doc.id, type: 'leave', leaveType: d.type, title: nick, start: d.date, source: 'leave' });
             });
             updateEvents('leave', leaves);
         });
@@ -352,19 +348,12 @@
 
     function changeMonth(diff) { currentDate.setMonth(currentDate.getMonth() + diff); selectedDateStr = null; document.getElementById('btnResetDate').style.display='none'; renderCalendar(); }
 
-    // 💡 V26: 다중 선택 필터 스위치 로직 💡
     function toggleFilter(type) {
-        if (type === 'all') {
-            activeFilters.clear();
-            activeFilters.add('all');
-        } else {
+        if (type === 'all') { activeFilters.clear(); activeFilters.add('all'); } 
+        else {
             activeFilters.delete('all');
-            if (activeFilters.has(type)) {
-                activeFilters.delete(type);
-                if(activeFilters.size === 0) activeFilters.add('all');
-            } else {
-                activeFilters.add(type);
-            }
+            if (activeFilters.has(type)) { activeFilters.delete(type); if(activeFilters.size === 0) activeFilters.add('all'); } 
+            else { activeFilters.add(type); }
         }
         
         document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -379,7 +368,6 @@
                 btn.classList.add('text-white');
             }
         });
-        
         renderCalendar();
     }
 
@@ -396,19 +384,14 @@
             let dw = new Date(year, month, i).getDay();
             let isSelected = dateStr === selectedDateStr ? 'selected' : '';
             
-            // 필터 적용 (다중)
             let dayEvents = allEvents.filter(ev => {
                 if(!activeFilters.has('all') && !activeFilters.has(ev.type)) return false;
                 return ev.end ? (dateStr >= ev.start && dateStr <= ev.end) : (dateStr === ev.start);
             });
             
-            // 💡 V26: 4개 초과 시 더보기 처리 💡
             let visibleEvents = dayEvents;
             let hiddenCount = 0;
-            if (dayEvents.length > 4) {
-                visibleEvents = dayEvents.slice(0, 3);
-                hiddenCount = dayEvents.length - 3;
-            }
+            if (dayEvents.length > 4) { visibleEvents = dayEvents.slice(0, 3); hiddenCount = dayEvents.length - 3; }
             
             let badgesHtml = visibleEvents.map(ev => {
                 let isStart = (dateStr === ev.start);
@@ -416,15 +399,19 @@
                 let isSingle = (!ev.end || ev.start === ev.end);
                 
                 let roundedClass = isSingle ? 'event-single' : (isStart ? 'event-start' : (isEnd ? 'event-end' : ''));
-                let titleText = (isStart || isSingle) ? ev.title : '&nbsp;'; 
                 let strike = ev.isDone ? 'text-decoration:line-through; opacity:0.5;' : '';
                 let bgColor = themeColors[ev.type];
                 
-                // 💡 V26: 연차 반차 디자인 및 인라인 체크박스 💡
+                // 💡 V27: 연차 표기 방식 완벽 매핑 💡
                 let bgStyle = `background-color: ${bgColor};`;
+                let titleText = (isStart || isSingle) ? ev.title : '&nbsp;'; 
+                
                 if(ev.type === 'leave') {
+                    let prefix = ev.leaveType === 'full' ? '[연차]' : (ev.leaveType === 'am' ? '[오전반차]' : '[오후반차]');
+                    titleText = `${prefix} ${ev.title}`;
+                    
                     if(ev.leaveType === 'am') bgStyle = `background: linear-gradient(to right, ${bgColor} 50%, rgba(128,128,128,0.2) 50%); border: 1px solid ${bgColor};`;
-                    else if(ev.leaveType === 'pm') bgStyle = `background: linear-gradient(to right, rgba(128,128,128,0.2) 50%, ${bgColor} 50%); border: 1px solid ${bgColor}; color: ${bgColor};`;
+                    else if(ev.leaveType === 'pm') bgStyle = `background: linear-gradient(to right, rgba(128,128,128,0.2) 50%, ${bgColor} 50%); border: 1px solid ${bgColor}; color: ${bgColor}; text-align:right; padding-right:6px;`;
                 }
                 
                 let inlineCheck = '';
@@ -435,14 +422,9 @@
                 return `<div class="event-badge ${roundedClass}" style="${bgStyle} ${strike}">${inlineCheck}${titleText}</div>`;
             }).join('');
 
-            if(hiddenCount > 0) {
-                badgesHtml += `<div class="more-btn" onclick="event.stopPropagation(); selectDate('${dateStr}')">+${hiddenCount} 더보기</div>`;
-            }
+            if(hiddenCount > 0) { badgesHtml += `<div class="more-btn" onclick="event.stopPropagation(); selectDate('${dateStr}')">+${hiddenCount} 더보기</div>`; }
 
-            html += `<div class="cal-day ${isSelected}" onclick="selectDate('${dateStr}')">
-                <div class="cal-date-num" style="color:${dw===0?'#e03131':(dw===6?'#5c7cfa':'#94a3b8')}">${i}</div>
-                ${badgesHtml}
-            </div>`;
+            html += `<div class="cal-day ${isSelected}" onclick="selectDate('${dateStr}')"><div class="cal-date-num" style="color:${dw===0?'#e03131':(dw===6?'#5c7cfa':'#94a3b8')}">${i}</div>${badgesHtml}</div>`;
         }
         document.getElementById('calendarGrid').innerHTML = html;
         renderEventList();
@@ -466,6 +448,8 @@
         let html = listEvents.map(ev => {
             let colorHex = themeColors[ev.type];
             let dateTxt = ev.end ? `${ev.start} ~ ${ev.end}` : ev.start;
+            
+            // 💡 V27: 하단 리스트에도 연차/반차 텍스트 정확히 노출 💡
             let extTxt = "";
             if(ev.type === 'leave') extTxt = ev.leaveType==='full'?'(종일)':(ev.leaveType==='am'?'(오전반차)':'(오후반차)');
 
@@ -520,7 +504,6 @@
         }, 100);
     }
     
-    // 💡 V26: 색상 편집 기능 💡
     function openColorModal() {
         let html = '';
         for(let key in colorNames) {
@@ -535,22 +518,15 @@
     
     async function saveThemeColors() {
         let newColors = {};
-        for(let key in colorNames) {
-            newColors[key] = document.getElementById(`col_${key}`).value;
-        }
+        for(let key in colorNames) { newColors[key] = document.getElementById(`col_${key}`).value; }
         await db.collection("teams").doc(myTeamId).update({ themeColors: newColors });
-        themeColors = newColors;
-        applyDotColors();
-        document.getElementById('colorModal').style.display = 'none';
-        renderCalendar();
+        themeColors = newColors; applyDotColors();
+        document.getElementById('colorModal').style.display = 'none'; renderCalendar();
         alert("색상이 변경되었습니다.");
     }
     
     function applyDotColors() {
-        for(let key in themeColors) {
-            let el = document.getElementById(`dot-${key}`);
-            if(el) el.style.color = themeColors[key];
-        }
+        for(let key in themeColors) { let el = document.getElementById(`dot-${key}`); if(el) el.style.color = themeColors[key]; }
     }
 </script>
 </body>
