@@ -10,7 +10,7 @@
     <meta property="og:image" content="https://idong2300.github.io/kimmoksu/og-image.png">
     <meta property="og:locale" content="ko_KR">
 
-    <title>김목수이야기 - 통합 스케줄러 (V27)</title>
+    <title>김목수이야기 - 마스터 스케줄러 (V28)</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -64,8 +64,7 @@
         .custom-check:checked::after { content: '✔'; position: absolute; color: white; font-size: 12px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
         .modal-box { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .modal-backdrop-custom { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-
+        
         body.light-mode { background-color: #f4f6f8; color: #212529; }
         body.light-mode .main-container { background-color: #f4f6f8; }
         body.light-mode .sidebar { background-color: #ffffff; border-right: 1px solid #dee2e6; }
@@ -93,6 +92,13 @@
 </head>
 <body>
 
+<script>
+    if (window.innerWidth <= 768) {
+        alert("마스터 스케줄러는 PC의 넓은 화면 전용입니다.\n모바일에서는 메인 홈으로 이동합니다.");
+        location.replace('index.html');
+    }
+</script>
+
 <div id="auth-overlay" style="display: none; position: fixed; inset: 0; background: var(--bg-deep); z-index: 9999; align-items: center; justify-content: center;">
     <div class="t5-card text-center" style="width: 100%; max-width: 380px;">
         <h3 class="mb-4 fw-bold">스케줄러 접속</h3>
@@ -108,13 +114,14 @@
         </div>
         <div class="flex-grow-1 mt-3">
             <div class="nav-link" onclick="location.href='index.html'"><i class="bi bi-house-door"></i> 홈 메인</div>
-            <div class="nav-link active"><i class="bi bi-calendar-check"></i> 통합 스케줄러</div>
+            <div class="nav-link active"><i class="bi bi-calendar-check"></i> 마스터 스케줄러</div>
             <div class="nav-link" onclick="location.href='index.html#status'"><i class="bi bi-gear-wide-connected"></i> 종합 상황판</div>
             <div class="nav-link" onclick="location.href='index.html#gantt'"><i class="bi bi-calendar3"></i> 공정표 & 추가공사</div>
             <div class="nav-link" onclick="location.href='index.html#worklog'"><i class="bi bi-journal-text"></i> 작업일보</div>
             <div class="nav-link" onclick="location.href='index.html#punch'"><i class="bi bi-ui-checks"></i> 펀치리스트</div>
             <div class="nav-link" onclick="location.href='index.html#t5'"><i class="bi bi-calculator"></i> T5 계산기</div>
             <div class="nav-link" onclick="location.href='index.html#leave'"><i class="bi bi-calendar2-check"></i> 연차 관리</div>
+            <div class="nav-link" onclick="location.href='index.html#memo'"><i class="bi bi-stickies"></i> 메모장</div>
             <div class="nav-link" onclick="location.href='index.html#profile'"><i class="bi bi-person-gear"></i> 내 정보 수정</div>
         </div>
         <div class="px-4 py-3 mt-auto">
@@ -178,10 +185,9 @@
             </div>
         </div>
     </main>
-    <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('active')"><i class="bi bi-list"></i></button>
 </div>
 
-<div class="modal-backdrop-custom" id="eventModal">
+<div id="eventModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(2px);">
     <div class="modal-box">
         <h5 class="fw-bold mb-4 text-white">새 일정 추가</h5>
         <div class="row g-3">
@@ -214,7 +220,7 @@
     </div>
 </div>
 
-<div class="modal-backdrop-custom" id="colorModal">
+<div id="colorModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(2px);">
     <div class="modal-box">
         <h5 class="fw-bold mb-4 text-white">달력 태그 색상 편집</h5>
         <p class="small text-secondary mb-3">설정한 색상은 팀원 모두에게 적용됩니다.</p>
@@ -306,7 +312,8 @@
             ss.docs.forEach(doc => {
                 let d = doc.data();
                 if(d.dates && d.dates.length > 0) {
-                    gantts.push({ id: doc.id, type: 'gantt', title: d.site, start: d.dates[0].split('T')[0], end: d.dates[d.dates.length-1].split('T')[0], source: 'gantt' });
+                    gantts.push({ id: doc.id+'_s', type: 'gantt', title: `[착공] ${d.site}`, start: d.dates[0].split('T')[0], source: 'gantt' });
+                    gantts.push({ id: doc.id+'_e', type: 'gantt', title: `[준공] ${d.site}`, start: d.dates[d.dates.length-1].split('T')[0], source: 'gantt' });
                 }
             });
             updateEvents('gantt', gantts);
@@ -328,7 +335,6 @@
             ss.docs.forEach(doc => {
                 let d = doc.data();
                 let nick = globalEmailToNick[d.userEmail] || d.userEmail.split('@')[0];
-                // 💡 V27: 연차, 오전반차, 오후반차 정확한 텍스트 매핑 💡
                 leaves.push({ id: doc.id, type: 'leave', leaveType: d.type, title: nick, start: d.date, source: 'leave' });
             });
             updateEvents('leave', leaves);
@@ -402,7 +408,6 @@
                 let strike = ev.isDone ? 'text-decoration:line-through; opacity:0.5;' : '';
                 let bgColor = themeColors[ev.type];
                 
-                // 💡 V27: 연차 표기 방식 완벽 매핑 💡
                 let bgStyle = `background-color: ${bgColor};`;
                 let titleText = (isStart || isSingle) ? ev.title : '&nbsp;'; 
                 
@@ -410,8 +415,11 @@
                     let prefix = ev.leaveType === 'full' ? '[연차]' : (ev.leaveType === 'am' ? '[오전반차]' : '[오후반차]');
                     titleText = `${prefix} ${ev.title}`;
                     
-                    if(ev.leaveType === 'am') bgStyle = `background: linear-gradient(to right, ${bgColor} 50%, rgba(128,128,128,0.2) 50%); border: 1px solid ${bgColor};`;
-                    else if(ev.leaveType === 'pm') bgStyle = `background: linear-gradient(to right, rgba(128,128,128,0.2) 50%, ${bgColor} 50%); border: 1px solid ${bgColor}; color: ${bgColor}; text-align:right; padding-right:6px;`;
+                    if(ev.leaveType === 'am') {
+                        bgStyle = `background-color: ${bgColor}; width: 50%; border-right: 1px solid rgba(255,255,255,0.2); align-self: flex-start;`;
+                    } else if(ev.leaveType === 'pm') {
+                        bgStyle = `background-color: ${bgColor}; width: 50%; border-left: 1px solid rgba(255,255,255,0.2); align-self: flex-end; text-align: right; padding-right: 6px;`;
+                    }
                 }
                 
                 let inlineCheck = '';
@@ -424,7 +432,10 @@
 
             if(hiddenCount > 0) { badgesHtml += `<div class="more-btn" onclick="event.stopPropagation(); selectDate('${dateStr}')">+${hiddenCount} 더보기</div>`; }
 
-            html += `<div class="cal-day ${isSelected}" onclick="selectDate('${dateStr}')"><div class="cal-date-num" style="color:${dw===0?'#e03131':(dw===6?'#5c7cfa':'#94a3b8')}">${i}</div>${badgesHtml}</div>`;
+            html += `<div class="cal-day ${isSelected}" onclick="selectDate('${dateStr}')">
+                <div class="cal-date-num" style="color:${dw===0?'#e03131':(dw===6?'#5c7cfa':'#94a3b8')}">${i}</div>
+                ${badgesHtml}
+            </div>`;
         }
         document.getElementById('calendarGrid').innerHTML = html;
         renderEventList();
@@ -449,7 +460,6 @@
             let colorHex = themeColors[ev.type];
             let dateTxt = ev.end ? `${ev.start} ~ ${ev.end}` : ev.start;
             
-            // 💡 V27: 하단 리스트에도 연차/반차 텍스트 정확히 노출 💡
             let extTxt = "";
             if(ev.type === 'leave') extTxt = ev.leaveType==='full'?'(종일)':(ev.leaveType==='am'?'(오전반차)':'(오후반차)');
 
