@@ -81,3 +81,43 @@ input {
 .dropdown-menu.show { display: block !important; }
 .dropdown-menu button { display: block; width: 100%; padding: 12px 16px; text-align: left; background: none; color: white; border: none; border-bottom: 1px solid #374151; font-size: 0.9rem; }
 .dropdown-menu button:last-child { border-bottom: none; }
+/* V30: 엘리베이터식 위아래 정렬 버튼 & 드래그 핸들 */
+.sort-controls { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    margin-left: 10px;
+}
+.sort-btn { 
+    background: transparent; 
+    border: none; 
+    color: #6b7280; 
+    font-size: 0.7rem; 
+    line-height: 1; 
+    padding: 2px;
+}
+.sort-btn:active { transform: scale(0.8); color: var(--primary); }
+.drag-handle { 
+    cursor: grab; 
+    color: #4b5563; 
+    font-size: 1.2rem; 
+    margin-right: 10px; 
+}
+.drag-handle:active { cursor: grabbing; }
+
+/* V30: 작업일보 헤더 텍스트/버튼 우측 쫙 밀기 */
+.worklog-header-content {
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+.worklog-header-right {
+    margin-left: auto; /* 핵심: 왼쪽 공간을 모두 밀어내어 우측에 착 붙임 */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 10px; /* 기본 화살표 [▽] 와의 간격 확보 */
+}
+/* Bootstrap 아코디언 내부 여백 미세조정 */
+.accordion-button::after { margin-left: 0; }
