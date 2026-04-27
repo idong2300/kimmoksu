@@ -1094,12 +1094,18 @@
         renderAllSections(globalStatusData);
     }
 
-    function loadAllStatusData() { 
-        db.collection("site_status").where("teamId", "==", myTeamId).onSnapshot(ss => { 
-            // 💡 V30: order 필드 기준 정렬 (수직 화살표용) 💡
-            globalStatusData = ss.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => (a.order || a.createdAt) - (b.order || b.createdAt)); 
-            renderAllSections(globalStatusData); 
-        }); 
+    function loadAllStatusData() {
+        db.collection("site_status").where("teamId", "==", myTeamId).onSnapshot(ss => {
+            // 💡 V34 FIX: Falsy 함정 해결 - order=0 일 때 createdAt으로 튕겨나가는 버그 수정 💡
+            // (a.order || a.createdAt) → 0이 falsy로 처리되어 0번째 자리 이동 시 맨 아래로 튕김
+            // !== undefined 로 명시적 체크하여 0도 유효한 순서값으로 인식
+            globalStatusData = ss.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => {
+                const aOrder = (a.order !== undefined && a.order !== null) ? a.order : a.createdAt;
+                const bOrder = (b.order !== undefined && b.order !== null) ? b.order : b.createdAt;
+                return aOrder - bOrder;
+            });
+            renderAllSections(globalStatusData);
+        });
     }
     
     // 💡 V32: 상황판 렌더링 - 드래그앤드롭 방식으로 전면 교체 💡
