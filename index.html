@@ -978,28 +978,65 @@
     // 💡 V30: 작업일보 아코디언 상태 보존용 메모리 객체 💡
     let worklogCollapsedStates = {};
 
-    // 💡 V1.4.0: 작업일보 기본 4대 공정 고정 세팅 (목수/도장/전기/필름) 💡
-    const DEFAULT_WORKLOG_TEAMS = ["목수", "도장", "전기", "필름"];
+    // 💡 V1.4.0: 작업일보 기본 4대 공정 고정 세팅 (목수팀/도장팀/전기팀/필름팀) 💡
+    const DEFAULT_WORKLOG_TEAMS = ["목수팀", "도장팀", "전기팀", "필름팀"];
 
-    function createDefaultTeamData() {
-        return DEFAULT_WORKLOG_TEAMS.map(teamName => ({ teamName, workers: [] }));
+    const LEGACY_WORKLOG_TEAM_NAME_MAP = {
+        "목수": "목수팀",
+        "도장": "도장팀",
+        "전기": "전기팀",
+        "필름": "필름팀"
+    };
+
+    function normalizeWorklogTeamName(teamName) {
+        const rawName = String(teamName || '').trim();
+        if(!rawName) return '';
+        return LEGACY_WORKLOG_TEAM_NAME_MAP[rawName] || rawName;
     }
 
-    function normalizeTeamData(source) {
+    function cloneWorkerData(worker) {
+        const safeWorker = worker && typeof worker === 'object' ? worker : {};
+        return {
+            ...safeWorker,
+            name: safeWorker.name || '',
+            days: safeWorker.days && typeof safeWorker.days === 'object' ? { ...safeWorker.days } : {}
+        };
+    }
+
+    function createDefaultTeamData() {
+        return DEFAULT_WORKLOG_TEAMS.map(teamName => ({
+            teamName: teamName,
+            workers: []
+        }));
+    }
+
+    function normalizeTeamData(source, options = {}) {
+        const includeDefaults = !!options.includeDefaults;
         const safeSource = Array.isArray(source) ? source : [];
-        const normalized = createDefaultTeamData();
-        const defaultNames = new Set(DEFAULT_WORKLOG_TEAMS);
+        const normalized = includeDefaults ? createDefaultTeamData() : [];
+        const indexByName = new Map();
+
+        normalized.forEach((team, index) => {
+            indexByName.set(team.teamName, index);
+        });
 
         safeSource.forEach(team => {
-            if(!team || !team.teamName) return;
+            if(!team || typeof team !== 'object') return;
+
+            const normalizedName = normalizeWorklogTeamName(team.teamName);
+            if(!normalizedName) return;
+
             const safeTeam = {
-                teamName: team.teamName,
-                workers: Array.isArray(team.workers) ? team.workers : []
+                teamName: normalizedName,
+                workers: Array.isArray(team.workers) ? team.workers.map(cloneWorkerData) : []
             };
 
-            const defaultIndex = normalized.findIndex(t => t.teamName === safeTeam.teamName);
-            if(defaultIndex >= 0) normalized[defaultIndex] = safeTeam;
-            else if(!defaultNames.has(safeTeam.teamName)) normalized.push(safeTeam);
+            if(indexByName.has(normalizedName)) {
+                normalized[indexByName.get(normalizedName)] = safeTeam;
+            } else {
+                indexByName.set(normalizedName, normalized.length);
+                normalized.push(safeTeam);
+            }
         });
 
         return normalized;
@@ -1046,19 +1083,33 @@
             el.classList.add('active');
         }
 
-        document.getElementById('sidebar').classList.remove('active');
-        document.getElementById('sidebarOverlay').classList.remove('active');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        if(sidebar) sidebar.classList.remove('active');
+        if(sidebarOverlay) sidebarOverlay.classList.remove('active');
         
         if(pushState) history.pushState({page: pageId}, "", "#" + pageId);
 
         if(pageId === 'team') checkTeamUI();
         if(pageId === 'profile') {
-            document.getElementById('editNickname').value = userNickname;
-            document.getElementById('editEmail').value = myEmail;
+            const nickInput = document.getElementById('editNickname');
+            const emailInput = document.getElementById('editEmail');
+            if(nickInput) nickInput.value = userNickname;
+            if(emailInput) emailInput.value = myEmail;
         }
         if(pageId === 'worklog') {
-            if(!preserveState) resetWorklogForm();
-            renderAllTeams();
+            if(preserveState) {
+                // 수정/복사 진입은 저장된 데이터 그대로 보여줘야 하므로 기본 4개 팀을 추가로 생성하지 않음
+                teamData = normalizeTeamData(teamData, { includeDefaults: false });
+            } else {
+                const isNewWorklog = (typeof editingId === 'undefined' || editingId === null);
+                if(isNewWorklog) {
+                    resetWorklogForm();
+                } else {
+                    teamData = normalizeTeamData(teamData, { includeDefaults: false });
+                }
+            }
+            if(typeof renderAllTeams === 'function') renderAllTeams();
         }
         if(pageId === 'gantt' && !preserveState) resetGanttForm();
         if(pageId === 't5' && !preserveState) resetT5Form();
@@ -1069,12 +1120,15 @@
     function resetVolatilePageState(nextPageId) {
         // 사이드바 이동/일반 페이지 전환 시 이전 편집 상태가 다음 화면에 묻어가지 않도록 전역 편집 키 초기화
         try { if(typeof siteEditingId !== 'undefined') siteEditingId = null; } catch(e) {}
-        try { if(typeof editingId !== 'undefined') editingId = null; } catch(e) {}
         try { if(typeof currentGanttId !== 'undefined') currentGanttId = null; } catch(e) {}
         try { if(typeof t5EditingId !== 'undefined') t5EditingId = null; } catch(e) {}
         try { if(typeof editingMemoId !== 'undefined') editingMemoId = null; } catch(e) {}
         try { if(typeof currentGanttMemoKey !== 'undefined') currentGanttMemoKey = null; } catch(e) {}
         try { if(typeof calculatedData !== 'undefined') calculatedData = null; } catch(e) {}
+
+        if(nextPageId !== 'worklog') {
+            try { if(typeof editingId !== 'undefined') editingId = null; } catch(e) {}
+        }
 
         resetSiteForm();
         resetGanttForm();
@@ -1278,6 +1332,15 @@
     let cachedNotices = [];
     let cachedBoardMemos = [];
 
+    function escapeBoardHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function canUseIntegratedEditMode() {
         return myRole === 'owner' || myRole === 'admin' || globalStatusAdmins.includes(myEmail) || globalNoticeAdmins.includes(myEmail);
     }
@@ -1286,25 +1349,59 @@
         return myRole === 'owner' || myRole === 'admin' || globalNoticeAdmins.includes(myEmail) || globalStatusAdmins.includes(myEmail);
     }
 
+    function destroyBoardSortables() {
+        if(noticeSortable) {
+            try { noticeSortable.destroy(); } catch(e) {}
+            noticeSortable = null;
+        }
+        if(memoSortable) {
+            try { memoSortable.destroy(); } catch(e) {}
+            memoSortable = null;
+        }
+    }
+
     function loadBoardMemos() {
         if(!myTeamId) return;
 
-        if(noticeUnsubscribe) noticeUnsubscribe();
-        if(boardMemoUnsubscribe) boardMemoUnsubscribe();
+        if(noticeUnsubscribe) {
+            try { noticeUnsubscribe(); } catch(e) {}
+            noticeUnsubscribe = null;
+        }
+        if(boardMemoUnsubscribe) {
+            try { boardMemoUnsubscribe(); } catch(e) {}
+            boardMemoUnsubscribe = null;
+        }
+
+        destroyBoardSortables();
 
         noticeUnsubscribe = db.collection("notices").where("teamId", "==", myTeamId).orderBy("createdAt", "desc").onSnapshot(ss => {
-            cachedNotices = ss.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                dateStr: new Date(doc.data().createdAt || Date.now()).toLocaleDateString().slice(5)
-            })).sort((a,b) => (a.order !== undefined && b.order !== undefined) ? a.order - b.order : (b.createdAt || 0) - (a.createdAt || 0));
+            cachedNotices = ss.docs.map(doc => {
+                const data = doc.data() || {};
+                return {
+                    id: doc.id,
+                    ...data,
+                    dateStr: new Date(data.createdAt || Date.now()).toLocaleDateString().slice(5)
+                };
+            }).sort((a,b) => {
+                const aOrder = (a.order !== undefined && a.order !== null) ? a.order : (a.createdAt || 0);
+                const bOrder = (b.order !== undefined && b.order !== null) ? b.order : (b.createdAt || 0);
+                return aOrder - bOrder;
+            });
             renderBoardMemos();
+        }, error => {
+            console.error('공지사항 로드 오류:', error);
         });
 
         boardMemoUnsubscribe = db.collection("board_memos").where("teamId", "==", myTeamId).where("type", "==", "memo").orderBy("createdAt", "desc").onSnapshot(ss => {
-            cachedBoardMemos = ss.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                .sort((a,b) => (a.order !== undefined && b.order !== undefined) ? a.order - b.order : (b.createdAt || 0) - (a.createdAt || 0));
+            cachedBoardMemos = ss.docs.map(doc => ({ id: doc.id, ...(doc.data() || {}) }))
+                .sort((a,b) => {
+                    const aOrder = (a.order !== undefined && a.order !== null) ? a.order : (a.createdAt || 0);
+                    const bOrder = (b.order !== undefined && b.order !== null) ? b.order : (b.createdAt || 0);
+                    return aOrder - bOrder;
+                });
             renderBoardMemos();
+        }, error => {
+            console.error('회의 전달내용 로드 오류:', error);
         });
     }
 
@@ -1316,37 +1413,46 @@
         if(!homeNotice || !manageNotice || !homeMsg || !manageMemo) return;
 
         const boardEditEnabled = isStatusEditMode && canEditBoardItems();
-        const dragHandle = boardEditEnabled ? `<i class="bi bi-grip-vertical drag-handle me-2"></i>` : '';
+        const dragHandle = boardEditEnabled ? `<i class="bi bi-grip-vertical drag-handle me-2 flex-shrink-0"></i>` : '';
 
-        homeNotice.innerHTML = cachedNotices.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${n.text}</div>`).join('') || '내용 없음';
-        manageNotice.innerHTML = cachedNotices.map(n =>
-            `<div class="board-item d-flex justify-content-between align-items-center" data-id="${n.id}">
-                <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+        homeNotice.innerHTML = cachedNotices.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${escapeBoardHtml(n.text || '')}</div>`).join('') || '내용 없음';
+        manageNotice.innerHTML = cachedNotices.map(n => {
+            const id = escapeBoardHtml(n.id);
+            const text = escapeBoardHtml(n.text || '');
+            const dateStr = escapeBoardHtml(n.dateStr || '');
+            return `<div class="board-item d-flex align-items-center" data-id="${id}">
+                <div class="d-flex align-items-center flex-grow-1 overflow-hidden pe-2">
                     ${dragHandle}
-                    <span class="text-truncate">${n.text} <span class="small text-secondary ms-2">${n.dateStr || ''}</span></span>
+                    <span class="flex-grow-1 text-truncate pe-2">${text} <span class="small text-secondary ms-2">${dateStr}</span></span>
                 </div>
                 ${boardEditEnabled ? `<button class="btn btn-sm text-danger p-0 ms-2 flex-shrink-0" onclick="delOldNotice('${n.id}')"><i class="bi bi-trash"></i></button>` : ''}
-            </div>`
-        ).join('');
+            </div>`;
+        }).join('');
 
-        homeMsg.innerHTML = cachedBoardMemos.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${n.text}</div>`).join('') || '내용 없음';
-        manageMemo.innerHTML = cachedBoardMemos.map(n =>
-            `<div class="board-item d-flex justify-content-between align-items-center" style="border-color:var(--success-btn);" data-id="${n.id}">
-                <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+        homeMsg.innerHTML = cachedBoardMemos.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${escapeBoardHtml(n.text || '')}</div>`).join('') || '내용 없음';
+        manageMemo.innerHTML = cachedBoardMemos.map(n => {
+            const id = escapeBoardHtml(n.id);
+            const text = escapeBoardHtml(n.text || '');
+            const dateStr = escapeBoardHtml(n.dateStr || '');
+            return `<div class="board-item d-flex align-items-center" style="border-color:var(--success-btn);" data-id="${id}">
+                <div class="d-flex align-items-center flex-grow-1 overflow-hidden pe-2">
                     ${dragHandle}
-                    <span class="text-truncate">${n.text} <span class="small text-secondary ms-2">${n.dateStr || ''}</span></span>
+                    <span class="flex-grow-1 text-truncate pe-2">${text} <span class="small text-secondary ms-2">${dateStr}</span></span>
                 </div>
                 ${boardEditEnabled ? `<button class="btn btn-sm text-danger p-0 ms-2 flex-shrink-0" onclick="delBoardItem('${n.id}')"><i class="bi bi-trash"></i></button>` : ''}
-            </div>`
-        ).join('');
+            </div>`;
+        }).join('');
 
         initBoardSortables(boardEditEnabled);
     }
 
     function initBoardSortables(enable) {
-        if(noticeSortable) { try { noticeSortable.destroy(); } catch(e) {} noticeSortable = null; }
-        if(memoSortable) { try { memoSortable.destroy(); } catch(e) {} memoSortable = null; }
+        destroyBoardSortables();
         if(!enable) return;
+        if(typeof Sortable === 'undefined') {
+            console.warn('SortableJS가 로드되지 않아 게시판 드래그 정렬을 건너뜁니다.');
+            return;
+        }
 
         const noticeList = document.getElementById('manage-notice-list');
         const memoList = document.getElementById('manage-memo-list');
@@ -1360,7 +1466,10 @@
                 onEnd: async function() {
                     const items = document.querySelectorAll('#manage-notice-list .board-item');
                     const batch = db.batch();
-                    items.forEach((el, idx) => batch.update(db.collection("notices").doc(el.getAttribute('data-id')), { order: idx }));
+                    items.forEach((el, idx) => {
+                        const id = el.getAttribute('data-id');
+                        if(id) batch.update(db.collection("notices").doc(id), { order: idx });
+                    });
                     await batch.commit();
                 }
             });
@@ -1375,7 +1484,10 @@
                 onEnd: async function() {
                     const items = document.querySelectorAll('#manage-memo-list .board-item');
                     const batch = db.batch();
-                    items.forEach((el, idx) => batch.update(db.collection("board_memos").doc(el.getAttribute('data-id')), { order: idx }));
+                    items.forEach((el, idx) => {
+                        const id = el.getAttribute('data-id');
+                        if(id) batch.update(db.collection("board_memos").doc(id), { order: idx });
+                    });
                     await batch.commit();
                 }
             });
@@ -1403,7 +1515,10 @@
         }
         isStatusEditMode = !isStatusEditMode;
         const btn = document.getElementById('btnEditStatus');
-        if(btn) btn.classList.toggle('active', isStatusEditMode);
+        if(btn) {
+            btn.classList.toggle('active', isStatusEditMode);
+            btn.innerText = isStatusEditMode ? '편집 종료' : '편집';
+        }
         renderAllSections(globalStatusData);
         renderBoardMemos();
     }
@@ -2031,13 +2146,60 @@
     function addTeam() { const n = prompt("공정명"); if(n){ teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
     function addWorker(t) { teamData[t].workers.push({name:"", days:{}}); renderAllTeams(); }
     function removeWorker(t, w) { if(confirm("삭제하시겠습니까?")){ teamData[t].workers.splice(w,1); renderAllTeams(); } }
-    async function saveMonthlyLog() { const m = document.getElementById('logMonth').value, s = document.getElementById('siteName').value; if(!s) return; teamData = normalizeTeamData(teamData); const d = { teamId:myTeamId, month:m, site:s, teamData, updatedAt:Date.now(), lastModifier:userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).update(d); else await db.collection("monthly_logs").add({...d, originalWriter:userNickname}); alert("저장 완료"); location.reload(); }
+    async function saveMonthlyLog() {
+        const m = document.getElementById('logMonth').value;
+        const s = document.getElementById('siteName').value;
+        if(!s) return;
+
+        teamData = normalizeTeamData(teamData, { includeDefaults: false });
+        const d = { teamId: myTeamId, month: m, site: s, teamData, updatedAt: Date.now(), lastModifier: userNickname };
+
+        if(editingId) await db.collection("monthly_logs").doc(editingId).update(d);
+        else await db.collection("monthly_logs").add({ ...d, originalWriter: userNickname });
+
+        alert("저장 완료");
+        location.reload();
+    }
     function loadWorklogs() { db.collection("monthly_logs").where("teamId","==",myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { document.getElementById('history-list').innerHTML = ss.docs.map(doc => { const d = doc.data(); 
         let delBtnHtml = (myRole !== 'member') ? `<button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>` : '';
         let btnHtml = `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button><button class="t5-btn-small bg-primary text-white" onclick="copyLog('${doc.id}')">복사</button><button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>${delBtnHtml}`; 
         return `<div class="col-md-6"><div class="t5-card p-3 m-0 d-flex justify-content-between align-items-center"><div><b class="text-primary">${d.month}</b><br>${d.site}<br><span class="small text-secondary">작성: ${d.originalWriter||'관리자'} ${d.lastModifier?`/ 수정: ${d.lastModifier}`:''}</span></div><div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">${btnHtml}</div></div></div>`; }).join(''); }); }
-    async function editLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = normalizeTeamData(d.teamData); showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); window.scrollTo(0,0); }
-    async function copyLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = normalizeTeamData(d.teamData); showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); alert("데이터가 복사되었습니다."); window.scrollTo(0,0); }
+    async function editLog(id) {
+        const doc = await db.collection("monthly_logs").doc(id).get();
+        const d = doc.data() || {};
+
+        editingId = id;
+        teamData = normalizeTeamData(d.teamData, { includeDefaults: false });
+
+        showPage('worklog', null, true, { preserveState: true });
+
+        const logMonth = document.getElementById('logMonth');
+        const siteName = document.getElementById('siteName');
+        if(logMonth) logMonth.value = d.month || '';
+        if(siteName) siteName.value = d.site || '';
+
+        renderAllTeams();
+        window.scrollTo(0, 0);
+    }
+
+    async function copyLog(id) {
+        const doc = await db.collection("monthly_logs").doc(id).get();
+        const d = doc.data() || {};
+
+        editingId = null;
+        teamData = normalizeTeamData(d.teamData, { includeDefaults: false });
+
+        showPage('worklog', null, true, { preserveState: true });
+
+        const logMonth = document.getElementById('logMonth');
+        const siteName = document.getElementById('siteName');
+        if(logMonth) logMonth.value = d.month || '';
+        if(siteName) siteName.value = `${d.site || ''} (복사)`;
+
+        renderAllTeams();
+        alert("데이터가 복사되었습니다.");
+        window.scrollTo(0, 0);
+    }
     async function deleteLog(id) { if(confirm("이 작업일보를 완전히 삭제하시겠습니까?")) { await db.collection("monthly_logs").doc(id).delete(); } }
     async function exportToExcel(id) { 
         const d_raw = (await db.collection("monthly_logs").doc(id).get()).data(); const [year, monthNum] = d_raw.month.split('-'); const lastDayNum = new Date(year, monthNum, 0).getDate(); 
