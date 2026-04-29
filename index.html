@@ -17,14 +17,15 @@
 
     <title>김목수이야기 - 메인 지휘소</title>
     <!-- ============================================
-         📋 김목수이야기 통합 ERP - 버전: V1.4.0 (통합 안정화 및 연차 개편)
-         📅 마지막 업데이트: 통합 안정화 및 연차 개편
+         📋 김목수이야기 통합 ERP - 버전: V1.4.1 (게시판 레이아웃 및 연차 관리자 보수)
+         📅 마지막 업데이트: 게시판 레이아웃 및 연차 관리자 보수
          🏗️ 베이스라인 V1.0 = 기존 V30
          📝 변경 이력:
             V1.2 - 공정표 메모 기능 (기능 추가)
             V1.2.1 - 메모 모달 버그 + 모달화
-            V1.3.0 - 공정표 커스텀 툴팁 + 메모장 수정/색상 (기능 추가)
+            이전버전 - 공정표 커스텀 툴팁 + 메모장 수정/색상 (기능 추가)
             V1.4.0 - 통합 안정화 및 연차 개편 (사이드바 초기화/작업일보 기본 공종/편집 모드 통합/캡처 안정화)
+            V1.4.1 - 게시판 삭제 버튼 레이아웃 고정 + 연차 관리자 저장 로직 보수
          ============================================ -->
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -212,7 +213,7 @@
         }
         .gantt-cell.has-memo { cursor: help; }
 
-        /* 💡 V1.3.0: 공정표 커스텀 툴팁 (즉시 반응) 💡 */
+        /* 💡 이전버전: 공정표 커스텀 툴팁 (즉시 반응) 💡 */
         .gantt-tooltip {
             position: absolute;
             display: none;
@@ -322,7 +323,7 @@
         .drag-handle:hover { color: var(--primary-accent); }
         body.light-mode .drag-handle { color: #adb5bd; }
         body.light-mode .drag-handle:hover { color: var(--primary-accent); }
-        /* 💡 V1.3.0: 메모 색상 선택 칩 💡 */
+        /* 💡 이전버전: 메모 색상 선택 칩 💡 */
         .memo-color-chip {
             width: 36px;
             height: 36px;
@@ -359,7 +360,7 @@
             font-size: 1rem;
         }
 
-        /* 💡 V1.3.0: 메모 카드 액션 버튼 (수정/삭제) 정렬 💡 */
+        /* 💡 이전버전: 메모 카드 액션 버튼 (수정/삭제) 정렬 💡 */
         .memo-card-actions { display: flex; gap: 8px; align-items: center; }
         .memo-card-actions i { cursor: pointer; font-size: 1rem; transition: 0.2s; }
         .memo-card-actions .memo-edit-btn { color: #495057; }
@@ -845,7 +846,7 @@
             <textarea id="memoTextInput" class="form-control input-dark" rows="5" placeholder="메모 내용을 입력하세요"></textarea>
         </div>
 
-        <!-- 💡 V1.3.0: 메모 색상 선택 팔레트 💡 -->
+        <!-- 💡 이전버전: 메모 색상 선택 팔레트 💡 -->
         <div class="mb-3">
             <label class="text-secondary small fw-bold mb-2 d-block">메모 색상</label>
             <div class="memo-color-palette d-flex gap-2 flex-wrap">
@@ -978,65 +979,28 @@
     // 💡 V30: 작업일보 아코디언 상태 보존용 메모리 객체 💡
     let worklogCollapsedStates = {};
 
-    // 💡 V1.4.0: 작업일보 기본 4대 공정 고정 세팅 (목수팀/도장팀/전기팀/필름팀) 💡
-    const DEFAULT_WORKLOG_TEAMS = ["목수팀", "도장팀", "전기팀", "필름팀"];
-
-    const LEGACY_WORKLOG_TEAM_NAME_MAP = {
-        "목수": "목수팀",
-        "도장": "도장팀",
-        "전기": "전기팀",
-        "필름": "필름팀"
-    };
-
-    function normalizeWorklogTeamName(teamName) {
-        const rawName = String(teamName || '').trim();
-        if(!rawName) return '';
-        return LEGACY_WORKLOG_TEAM_NAME_MAP[rawName] || rawName;
-    }
-
-    function cloneWorkerData(worker) {
-        const safeWorker = worker && typeof worker === 'object' ? worker : {};
-        return {
-            ...safeWorker,
-            name: safeWorker.name || '',
-            days: safeWorker.days && typeof safeWorker.days === 'object' ? { ...safeWorker.days } : {}
-        };
-    }
+    // 💡 V1.4.0: 작업일보 기본 4대 공정 고정 세팅 (목수/도장/전기/필름) 💡
+    const DEFAULT_WORKLOG_TEAMS = ["목수", "도장", "전기", "필름"];
 
     function createDefaultTeamData() {
-        return DEFAULT_WORKLOG_TEAMS.map(teamName => ({
-            teamName: teamName,
-            workers: []
-        }));
+        return DEFAULT_WORKLOG_TEAMS.map(teamName => ({ teamName, workers: [] }));
     }
 
-    function normalizeTeamData(source, options = {}) {
-        const includeDefaults = !!options.includeDefaults;
+    function normalizeTeamData(source) {
         const safeSource = Array.isArray(source) ? source : [];
-        const normalized = includeDefaults ? createDefaultTeamData() : [];
-        const indexByName = new Map();
-
-        normalized.forEach((team, index) => {
-            indexByName.set(team.teamName, index);
-        });
+        const normalized = createDefaultTeamData();
+        const defaultNames = new Set(DEFAULT_WORKLOG_TEAMS);
 
         safeSource.forEach(team => {
-            if(!team || typeof team !== 'object') return;
-
-            const normalizedName = normalizeWorklogTeamName(team.teamName);
-            if(!normalizedName) return;
-
+            if(!team || !team.teamName) return;
             const safeTeam = {
-                teamName: normalizedName,
-                workers: Array.isArray(team.workers) ? team.workers.map(cloneWorkerData) : []
+                teamName: team.teamName,
+                workers: Array.isArray(team.workers) ? team.workers : []
             };
 
-            if(indexByName.has(normalizedName)) {
-                normalized[indexByName.get(normalizedName)] = safeTeam;
-            } else {
-                indexByName.set(normalizedName, normalized.length);
-                normalized.push(safeTeam);
-            }
+            const defaultIndex = normalized.findIndex(t => t.teamName === safeTeam.teamName);
+            if(defaultIndex >= 0) normalized[defaultIndex] = safeTeam;
+            else if(!defaultNames.has(safeTeam.teamName)) normalized.push(safeTeam);
         });
 
         return normalized;
@@ -1083,33 +1047,19 @@
             el.classList.add('active');
         }
 
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        if(sidebar) sidebar.classList.remove('active');
-        if(sidebarOverlay) sidebarOverlay.classList.remove('active');
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('sidebarOverlay').classList.remove('active');
         
         if(pushState) history.pushState({page: pageId}, "", "#" + pageId);
 
         if(pageId === 'team') checkTeamUI();
         if(pageId === 'profile') {
-            const nickInput = document.getElementById('editNickname');
-            const emailInput = document.getElementById('editEmail');
-            if(nickInput) nickInput.value = userNickname;
-            if(emailInput) emailInput.value = myEmail;
+            document.getElementById('editNickname').value = userNickname;
+            document.getElementById('editEmail').value = myEmail;
         }
         if(pageId === 'worklog') {
-            if(preserveState) {
-                // 수정/복사 진입은 저장된 데이터 그대로 보여줘야 하므로 기본 4개 팀을 추가로 생성하지 않음
-                teamData = normalizeTeamData(teamData, { includeDefaults: false });
-            } else {
-                const isNewWorklog = (typeof editingId === 'undefined' || editingId === null);
-                if(isNewWorklog) {
-                    resetWorklogForm();
-                } else {
-                    teamData = normalizeTeamData(teamData, { includeDefaults: false });
-                }
-            }
-            if(typeof renderAllTeams === 'function') renderAllTeams();
+            if(!preserveState) resetWorklogForm();
+            renderAllTeams();
         }
         if(pageId === 'gantt' && !preserveState) resetGanttForm();
         if(pageId === 't5' && !preserveState) resetT5Form();
@@ -1120,15 +1070,12 @@
     function resetVolatilePageState(nextPageId) {
         // 사이드바 이동/일반 페이지 전환 시 이전 편집 상태가 다음 화면에 묻어가지 않도록 전역 편집 키 초기화
         try { if(typeof siteEditingId !== 'undefined') siteEditingId = null; } catch(e) {}
+        try { if(typeof editingId !== 'undefined') editingId = null; } catch(e) {}
         try { if(typeof currentGanttId !== 'undefined') currentGanttId = null; } catch(e) {}
         try { if(typeof t5EditingId !== 'undefined') t5EditingId = null; } catch(e) {}
         try { if(typeof editingMemoId !== 'undefined') editingMemoId = null; } catch(e) {}
         try { if(typeof currentGanttMemoKey !== 'undefined') currentGanttMemoKey = null; } catch(e) {}
         try { if(typeof calculatedData !== 'undefined') calculatedData = null; } catch(e) {}
-
-        if(nextPageId !== 'worklog') {
-            try { if(typeof editingId !== 'undefined') editingId = null; } catch(e) {}
-        }
 
         resetSiteForm();
         resetGanttForm();
@@ -1324,22 +1271,13 @@
         location.reload(); 
     }
 
-    // 💡 V1.4.0: 게시판 (공지/전달내용) - 상황판 편집 모드와 관리 UI 완전 동기화 💡
+    // 💡 V1.4.1: 게시판 (공지/전달내용) - 상황판 편집 모드와 관리 UI 완전 동기화 + 삭제 버튼 레이아웃 고정 💡
     let noticeSortable = null;
     let memoSortable = null;
     let noticeUnsubscribe = null;
     let boardMemoUnsubscribe = null;
     let cachedNotices = [];
     let cachedBoardMemos = [];
-
-    function escapeBoardHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
 
     function canUseIntegratedEditMode() {
         return myRole === 'owner' || myRole === 'admin' || globalStatusAdmins.includes(myEmail) || globalNoticeAdmins.includes(myEmail);
@@ -1349,59 +1287,25 @@
         return myRole === 'owner' || myRole === 'admin' || globalNoticeAdmins.includes(myEmail) || globalStatusAdmins.includes(myEmail);
     }
 
-    function destroyBoardSortables() {
-        if(noticeSortable) {
-            try { noticeSortable.destroy(); } catch(e) {}
-            noticeSortable = null;
-        }
-        if(memoSortable) {
-            try { memoSortable.destroy(); } catch(e) {}
-            memoSortable = null;
-        }
-    }
-
     function loadBoardMemos() {
         if(!myTeamId) return;
 
-        if(noticeUnsubscribe) {
-            try { noticeUnsubscribe(); } catch(e) {}
-            noticeUnsubscribe = null;
-        }
-        if(boardMemoUnsubscribe) {
-            try { boardMemoUnsubscribe(); } catch(e) {}
-            boardMemoUnsubscribe = null;
-        }
-
-        destroyBoardSortables();
+        if(noticeUnsubscribe) noticeUnsubscribe();
+        if(boardMemoUnsubscribe) boardMemoUnsubscribe();
 
         noticeUnsubscribe = db.collection("notices").where("teamId", "==", myTeamId).orderBy("createdAt", "desc").onSnapshot(ss => {
-            cachedNotices = ss.docs.map(doc => {
-                const data = doc.data() || {};
-                return {
-                    id: doc.id,
-                    ...data,
-                    dateStr: new Date(data.createdAt || Date.now()).toLocaleDateString().slice(5)
-                };
-            }).sort((a,b) => {
-                const aOrder = (a.order !== undefined && a.order !== null) ? a.order : (a.createdAt || 0);
-                const bOrder = (b.order !== undefined && b.order !== null) ? b.order : (b.createdAt || 0);
-                return aOrder - bOrder;
-            });
+            cachedNotices = ss.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                dateStr: new Date(doc.data().createdAt || Date.now()).toLocaleDateString().slice(5)
+            })).sort((a,b) => (a.order !== undefined && b.order !== undefined) ? a.order - b.order : (b.createdAt || 0) - (a.createdAt || 0));
             renderBoardMemos();
-        }, error => {
-            console.error('공지사항 로드 오류:', error);
         });
 
         boardMemoUnsubscribe = db.collection("board_memos").where("teamId", "==", myTeamId).where("type", "==", "memo").orderBy("createdAt", "desc").onSnapshot(ss => {
-            cachedBoardMemos = ss.docs.map(doc => ({ id: doc.id, ...(doc.data() || {}) }))
-                .sort((a,b) => {
-                    const aOrder = (a.order !== undefined && a.order !== null) ? a.order : (a.createdAt || 0);
-                    const bOrder = (b.order !== undefined && b.order !== null) ? b.order : (b.createdAt || 0);
-                    return aOrder - bOrder;
-                });
+            cachedBoardMemos = ss.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a,b) => (a.order !== undefined && b.order !== undefined) ? a.order - b.order : (b.createdAt || 0) - (a.createdAt || 0));
             renderBoardMemos();
-        }, error => {
-            console.error('회의 전달내용 로드 오류:', error);
         });
     }
 
@@ -1413,46 +1317,37 @@
         if(!homeNotice || !manageNotice || !homeMsg || !manageMemo) return;
 
         const boardEditEnabled = isStatusEditMode && canEditBoardItems();
-        const dragHandle = boardEditEnabled ? `<i class="bi bi-grip-vertical drag-handle me-2 flex-shrink-0"></i>` : '';
+        const dragHandle = boardEditEnabled ? `<i class="bi bi-grip-vertical drag-handle me-2"></i>` : '';
 
-        homeNotice.innerHTML = cachedNotices.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${escapeBoardHtml(n.text || '')}</div>`).join('') || '내용 없음';
-        manageNotice.innerHTML = cachedNotices.map(n => {
-            const id = escapeBoardHtml(n.id);
-            const text = escapeBoardHtml(n.text || '');
-            const dateStr = escapeBoardHtml(n.dateStr || '');
-            return `<div class="board-item d-flex align-items-center" data-id="${id}">
-                <div class="d-flex align-items-center flex-grow-1 overflow-hidden pe-2">
+        homeNotice.innerHTML = cachedNotices.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${n.text}</div>`).join('') || '내용 없음';
+        manageNotice.innerHTML = cachedNotices.map(n =>
+            `<div class="board-item d-flex justify-content-between align-items-center" data-id="${n.id}">
+                <div class="d-flex align-items-center flex-grow-1 overflow-hidden pe-2" style="min-width: 0;">
                     ${dragHandle}
-                    <span class="flex-grow-1 text-truncate pe-2">${text} <span class="small text-secondary ms-2">${dateStr}</span></span>
+                    <div class="flex-grow-1 text-truncate pe-2" style="min-width: 0;">${n.text} <span class="small text-secondary ms-2">${n.dateStr || ''}</span></div>
                 </div>
-                ${boardEditEnabled ? `<button class="btn btn-sm text-danger p-0 ms-2 flex-shrink-0" onclick="delOldNotice('${n.id}')"><i class="bi bi-trash"></i></button>` : ''}
-            </div>`;
-        }).join('');
+                ${boardEditEnabled ? `<div class="flex-shrink-0"><button class="btn btn-sm text-danger p-0 ms-2" onclick="delOldNotice('${n.id}')"><i class="bi bi-trash"></i></button></div>` : ''}
+            </div>`
+        ).join('');
 
-        homeMsg.innerHTML = cachedBoardMemos.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${escapeBoardHtml(n.text || '')}</div>`).join('') || '내용 없음';
-        manageMemo.innerHTML = cachedBoardMemos.map(n => {
-            const id = escapeBoardHtml(n.id);
-            const text = escapeBoardHtml(n.text || '');
-            const dateStr = escapeBoardHtml(n.dateStr || '');
-            return `<div class="board-item d-flex align-items-center" style="border-color:var(--success-btn);" data-id="${id}">
-                <div class="d-flex align-items-center flex-grow-1 overflow-hidden pe-2">
+        homeMsg.innerHTML = cachedBoardMemos.slice(0,5).map(n => `<div class="mb-1 text-truncate">• ${n.text}</div>`).join('') || '내용 없음';
+        manageMemo.innerHTML = cachedBoardMemos.map(n =>
+            `<div class="board-item d-flex justify-content-between align-items-center" style="border-color:var(--success-btn);" data-id="${n.id}">
+                <div class="d-flex align-items-center flex-grow-1 overflow-hidden pe-2" style="min-width: 0;">
                     ${dragHandle}
-                    <span class="flex-grow-1 text-truncate pe-2">${text} <span class="small text-secondary ms-2">${dateStr}</span></span>
+                    <div class="flex-grow-1 text-truncate pe-2" style="min-width: 0;">${n.text} <span class="small text-secondary ms-2">${n.dateStr || ''}</span></div>
                 </div>
-                ${boardEditEnabled ? `<button class="btn btn-sm text-danger p-0 ms-2 flex-shrink-0" onclick="delBoardItem('${n.id}')"><i class="bi bi-trash"></i></button>` : ''}
-            </div>`;
-        }).join('');
+                ${boardEditEnabled ? `<div class="flex-shrink-0"><button class="btn btn-sm text-danger p-0 ms-2" onclick="delBoardItem('${n.id}')"><i class="bi bi-trash"></i></button></div>` : ''}
+            </div>`
+        ).join('');
 
         initBoardSortables(boardEditEnabled);
     }
 
     function initBoardSortables(enable) {
-        destroyBoardSortables();
+        if(noticeSortable) { try { noticeSortable.destroy(); } catch(e) {} noticeSortable = null; }
+        if(memoSortable) { try { memoSortable.destroy(); } catch(e) {} memoSortable = null; }
         if(!enable) return;
-        if(typeof Sortable === 'undefined') {
-            console.warn('SortableJS가 로드되지 않아 게시판 드래그 정렬을 건너뜁니다.');
-            return;
-        }
 
         const noticeList = document.getElementById('manage-notice-list');
         const memoList = document.getElementById('manage-memo-list');
@@ -1466,10 +1361,7 @@
                 onEnd: async function() {
                     const items = document.querySelectorAll('#manage-notice-list .board-item');
                     const batch = db.batch();
-                    items.forEach((el, idx) => {
-                        const id = el.getAttribute('data-id');
-                        if(id) batch.update(db.collection("notices").doc(id), { order: idx });
-                    });
+                    items.forEach((el, idx) => batch.update(db.collection("notices").doc(el.getAttribute('data-id')), { order: idx }));
                     await batch.commit();
                 }
             });
@@ -1484,10 +1376,7 @@
                 onEnd: async function() {
                     const items = document.querySelectorAll('#manage-memo-list .board-item');
                     const batch = db.batch();
-                    items.forEach((el, idx) => {
-                        const id = el.getAttribute('data-id');
-                        if(id) batch.update(db.collection("board_memos").doc(id), { order: idx });
-                    });
+                    items.forEach((el, idx) => batch.update(db.collection("board_memos").doc(el.getAttribute('data-id')), { order: idx }));
                     await batch.commit();
                 }
             });
@@ -1515,10 +1404,7 @@
         }
         isStatusEditMode = !isStatusEditMode;
         const btn = document.getElementById('btnEditStatus');
-        if(btn) {
-            btn.classList.toggle('active', isStatusEditMode);
-            btn.innerText = isStatusEditMode ? '편집 종료' : '편집';
-        }
+        if(btn) btn.classList.toggle('active', isStatusEditMode);
         renderAllSections(globalStatusData);
         renderBoardMemos();
     }
@@ -1583,7 +1469,7 @@
                     let dragHandle = (isStatusEditMode && canEditStatus) 
                         ? `<i class="bi bi-grip-vertical drag-handle fs-5 me-2 text-secondary"></i>` : '';
                     const btnHTML = `
-                        <div class="d-flex gap-1 align-items-center">
+                        <div class="d-flex gap-1 align-items-center flex-shrink-0">
                             ${canEditStatus ? `<button class="btn btn-sm btn-outline-primary px-2 py-0" onclick="openSiteEditModal('${item.id}')"><i class="bi bi-pencil-square"></i> 수정</button>` : ''}
                             ${(canEditStatus && isStatusEditMode) ? `<button class="btn btn-sm btn-danger px-2 py-0" onclick="deleteSite('${item.id}')">삭제</button>` : ''}
                         </div>`;
@@ -1601,7 +1487,7 @@
                     if(sec.key === 'ongoing') gridHTML = `<div class="mobile-grid-3"><div><div class="mobile-grid-label">담당소장</div><div class="mobile-grid-val">${item.site_manager || '-'}</div></div><div><div class="mobile-grid-label">디자이너</div><div class="mobile-grid-val">${item.designer || '-'}</div></div><div><div class="mobile-grid-label">싸인담당</div><div class="mobile-grid-val">${item.designer_sign || '-'}</div></div></div>`;
                     else if(sec.key === 'scheduled') gridHTML = `<div class="mobile-grid-3" style="grid-template-columns:1fr;"><div class="text-start ps-2"><span class="mobile-grid-label me-2">예상소장:</span><span class="mobile-grid-val">${item.site_manager || '-'}</span></div></div>`;
                     else if(sec.key === 'designing') gridHTML = `<div class="mobile-grid-3" style="grid-template-columns:1fr;"><div class="text-start ps-2"><span class="mobile-grid-label me-2">디자이너:</span><span class="mobile-grid-val">${item.designer || '-'}</span></div></div>`;
-                    return `<div class="mobile-site-card" data-id="${item.id}"><div class="d-flex align-items-center">${dragHandle}<div class="flex-grow-1"><h6 class="mobile-card-title">${item.siteName}</h6><div class="mobile-card-subtitle"><span class="mobile-card-date">${dateStr}</span>${btnHTML}</div>${gridHTML}${etcHTML}</div></div></div>`;
+                    return `<div class="mobile-site-card" data-id="${item.id}"><div class="d-flex align-items-center">${dragHandle}<div class="flex-grow-1 overflow-hidden" style="min-width: 0;"><h6 class="mobile-card-title text-truncate">${item.siteName}</h6><div class="mobile-card-subtitle"><span class="mobile-card-date flex-grow-1 text-truncate pe-2" style="min-width: 0;">${dateStr}</span>${btnHTML}</div>${gridHTML}${etcHTML}</div></div></div>`;
                 }).join('');
             
             return `<div class="mb-5">
@@ -1759,7 +1645,7 @@
                 // 💡 V35: 메모 마커 + 툴팁 추가 💡
                 let memo = ganttMemos[key];
                 let memoClass = memo ? 'has-memo' : '';
-                // 💡 V1.3.0: 기본 title 속성 제거 - 커스텀 툴팁으로 대체 💡
+                // 💡 이전버전: 기본 title 속성 제거 - 커스텀 툴팁으로 대체 💡
                 // 메모 본문은 data-memo 속성에 저장 (커스텀 툴팁이 읽어감)
                 let memoDataAttr = memo ? `data-memo="${memo.replace(/"/g, '&quot;')}"` : '';
                 html += `<td class="gantt-cell ${bg} ${ganttState[key]?'gantt-active':''} ${memoClass}" data-key="${key}" ${memoDataAttr} onclick="toggleGantt('${key}')"></td>`;
@@ -1842,7 +1728,7 @@
             cell.addEventListener('touchend', cancelPress);
             cell.addEventListener('touchcancel', cancelPress);
 
-            // 💡 V1.3.0: 커스텀 툴팁 이벤트 (메모 있는 셀만) 💡
+            // 💡 이전버전: 커스텀 툴팁 이벤트 (메모 있는 셀만) 💡
             if(cell.classList.contains('has-memo')) {
                 // PC: 마우스 호버 시 즉시 표시
                 cell.addEventListener('mouseenter', showGanttTooltip);
@@ -1851,7 +1737,7 @@
         });
     }
 
-    // 💡 V1.3.0: 공정표 커스텀 툴팁 표시/숨김 함수 💡
+    // 💡 이전버전: 공정표 커스텀 툴팁 표시/숨김 함수 💡
     function showGanttTooltip(e) {
         const cell = e.currentTarget;
         const memo = cell.getAttribute('data-memo');
@@ -1888,7 +1774,7 @@
         if(tooltip) tooltip.style.display = 'none';
     }
 
-    // 💡 V1.3.0: 모바일 터치 시 다른 곳 터치하면 툴팁 닫기 + 메모 셀 탭으로 보기 💡
+    // 💡 이전버전: 모바일 터치 시 다른 곳 터치하면 툴팁 닫기 + 메모 셀 탭으로 보기 💡
     document.addEventListener('touchstart', function(e) {
         const cell = e.target.closest('.gantt-cell.has-memo');
         if(cell) {
@@ -2146,60 +2032,13 @@
     function addTeam() { const n = prompt("공정명"); if(n){ teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
     function addWorker(t) { teamData[t].workers.push({name:"", days:{}}); renderAllTeams(); }
     function removeWorker(t, w) { if(confirm("삭제하시겠습니까?")){ teamData[t].workers.splice(w,1); renderAllTeams(); } }
-    async function saveMonthlyLog() {
-        const m = document.getElementById('logMonth').value;
-        const s = document.getElementById('siteName').value;
-        if(!s) return;
-
-        teamData = normalizeTeamData(teamData, { includeDefaults: false });
-        const d = { teamId: myTeamId, month: m, site: s, teamData, updatedAt: Date.now(), lastModifier: userNickname };
-
-        if(editingId) await db.collection("monthly_logs").doc(editingId).update(d);
-        else await db.collection("monthly_logs").add({ ...d, originalWriter: userNickname });
-
-        alert("저장 완료");
-        location.reload();
-    }
+    async function saveMonthlyLog() { const m = document.getElementById('logMonth').value, s = document.getElementById('siteName').value; if(!s) return; teamData = normalizeTeamData(teamData); const d = { teamId:myTeamId, month:m, site:s, teamData, updatedAt:Date.now(), lastModifier:userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).update(d); else await db.collection("monthly_logs").add({...d, originalWriter:userNickname}); alert("저장 완료"); location.reload(); }
     function loadWorklogs() { db.collection("monthly_logs").where("teamId","==",myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { document.getElementById('history-list').innerHTML = ss.docs.map(doc => { const d = doc.data(); 
         let delBtnHtml = (myRole !== 'member') ? `<button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>` : '';
         let btnHtml = `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button><button class="t5-btn-small bg-primary text-white" onclick="copyLog('${doc.id}')">복사</button><button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>${delBtnHtml}`; 
         return `<div class="col-md-6"><div class="t5-card p-3 m-0 d-flex justify-content-between align-items-center"><div><b class="text-primary">${d.month}</b><br>${d.site}<br><span class="small text-secondary">작성: ${d.originalWriter||'관리자'} ${d.lastModifier?`/ 수정: ${d.lastModifier}`:''}</span></div><div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">${btnHtml}</div></div></div>`; }).join(''); }); }
-    async function editLog(id) {
-        const doc = await db.collection("monthly_logs").doc(id).get();
-        const d = doc.data() || {};
-
-        editingId = id;
-        teamData = normalizeTeamData(d.teamData, { includeDefaults: false });
-
-        showPage('worklog', null, true, { preserveState: true });
-
-        const logMonth = document.getElementById('logMonth');
-        const siteName = document.getElementById('siteName');
-        if(logMonth) logMonth.value = d.month || '';
-        if(siteName) siteName.value = d.site || '';
-
-        renderAllTeams();
-        window.scrollTo(0, 0);
-    }
-
-    async function copyLog(id) {
-        const doc = await db.collection("monthly_logs").doc(id).get();
-        const d = doc.data() || {};
-
-        editingId = null;
-        teamData = normalizeTeamData(d.teamData, { includeDefaults: false });
-
-        showPage('worklog', null, true, { preserveState: true });
-
-        const logMonth = document.getElementById('logMonth');
-        const siteName = document.getElementById('siteName');
-        if(logMonth) logMonth.value = d.month || '';
-        if(siteName) siteName.value = `${d.site || ''} (복사)`;
-
-        renderAllTeams();
-        alert("데이터가 복사되었습니다.");
-        window.scrollTo(0, 0);
-    }
+    async function editLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = normalizeTeamData(d.teamData); showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); window.scrollTo(0,0); }
+    async function copyLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = normalizeTeamData(d.teamData); showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); alert("데이터가 복사되었습니다."); window.scrollTo(0,0); }
     async function deleteLog(id) { if(confirm("이 작업일보를 완전히 삭제하시겠습니까?")) { await db.collection("monthly_logs").doc(id).delete(); } }
     async function exportToExcel(id) { 
         const d_raw = (await db.collection("monthly_logs").doc(id).get()).data(); const [year, monthNum] = d_raw.month.split('-'); const lastDayNum = new Date(year, monthNum, 0).getDate(); 
@@ -2290,10 +2129,10 @@
 
     // 메모장
     let currentMemoTab = 'private';
-    // 💡 V1.3.0: 메모 수정 모드 상태 + 색상 선택 💡
+    // 💡 이전버전: 메모 수정 모드 상태 + 색상 선택 💡
     let editingMemoId = null;
     let selectedMemoColor = '#fff9db'; // 기본 노란색
-    // 💡 V1.3.0: loadMemos - 카드별 색상 + 수정 버튼 + 구버전 데이터 방어 💡
+    // 💡 이전버전: loadMemos - 카드별 색상 + 수정 버튼 + 구버전 데이터 방어 💡
     function loadMemos() {
         db.collection("team_memos").where("teamId", "==", myTeamId).onSnapshot(ss => {
             let memos = ss.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b)=>b.createdAt-a.createdAt);
@@ -2336,7 +2175,7 @@
         loadMemos();
     }
     
-    // 💡 V1.3.0: 메모 저장 - 신규작성 또는 수정 (editingMemoId 분기) 💡
+    // 💡 이전버전: 메모 저장 - 신규작성 또는 수정 (editingMemoId 분기) 💡
     async function saveNewMemo() {
         let title = document.getElementById('memoTitleInput').value.trim();
         let text = document.getElementById('memoTextInput').value.trim();
@@ -2374,7 +2213,7 @@
         }
     }
 
-    // 💡 V1.3.0: 메모 수정 모드 진입 - 기존 데이터 폼에 채우고 모달 열기 💡
+    // 💡 이전버전: 메모 수정 모드 진입 - 기존 데이터 폼에 채우고 모달 열기 💡
     async function editMemo(id) {
         try {
             const doc = await db.collection("team_memos").doc(id).get();
@@ -2418,7 +2257,7 @@
         }
     }
 
-    // 💡 V1.3.0: 메모 작성 모달 열기 (신규 모드, 항상 깨끗한 상태) 💡
+    // 💡 이전버전: 메모 작성 모달 열기 (신규 모드, 항상 깨끗한 상태) 💡
     function openMemoCreateModal() {
         editingMemoId = null;  // 신규 모드 보장
         document.getElementById('memoTitleInput').value = '';
@@ -2438,7 +2277,7 @@
         document.getElementById('memoCreateModal').style.display = 'flex';
     }
 
-    // 💡 V1.3.0: 메모 작성 모달 닫기 + editingMemoId 초기화 필수 💡
+    // 💡 이전버전: 메모 작성 모달 닫기 + editingMemoId 초기화 필수 💡
     function closeMemoCreateModal() {
         document.getElementById('memoCreateModal').style.display = 'none';
         document.getElementById('memoTitleInput').value = '';
@@ -2511,10 +2350,8 @@
     document.getElementById('logMonth').value = new Date().toISOString().substring(0, 7);
 </script>
 
-<!-- 💡 V1.3.0: 공정표 커스텀 툴팁 (단일 인스턴스, 모든 메모 셀이 공유) 💡 -->
+<!-- 💡 이전버전: 공정표 커스텀 툴팁 (단일 인스턴스, 모든 메모 셀이 공유) 💡 -->
 <div id="gantt-custom-tooltip" class="gantt-tooltip"></div>
 
 </body>
 </html>
-
-
