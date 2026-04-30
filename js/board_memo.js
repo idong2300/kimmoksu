@@ -1,4 +1,12 @@
-    function canUseIntegratedEditMode() {
+    let noticeSortable = null;
+    let memoSortable = null;
+    let noticeUnsubscribe = null;
+    let boardMemoUnsubscribe = null;
+    let cachedNotices = [];
+    let cachedBoardMemos = [];
+
+
+function canUseIntegratedEditMode() {
         return myRole === 'owner' || myRole === 'admin' || globalStatusAdmins.includes(myEmail) || globalNoticeAdmins.includes(myEmail);
     }
 
