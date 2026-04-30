@@ -978,31 +978,6 @@
 <script src="js/auth.js"></script>
 
 <script>
-    async function openPermModal(type) {
-        currentPermType = type;
-        document.getElementById('permModalTitle').innerText = type === 'notice' ? '공지사항 담당자 설정' : '종합 상황판 담당자 설정';
-        const tDoc = await db.collection("teams").doc(myTeamId).get();
-        const members = tDoc.data().members || [];
-        let activeList = type === 'notice' ? globalNoticeAdmins : globalStatusAdmins;
-        
-        document.getElementById('permMemberList').innerHTML = members.map(m => {
-            let nick = globalEmailToNick[m] || m;
-            let checked = activeList.includes(m) ? 'checked' : '';
-            return `<label class="d-flex align-items-center gap-2 p-3 rounded perm-item-box cursor-pointer"><input type="checkbox" class="form-check-input perm-check" value="${m}" ${checked} style="width:20px; height:20px;"> <span class="fw-bold">${nick} <small class="text-secondary fw-normal">(${m})</small></span></label>`;
-        }).join('');
-        permModalInst.show();
-    }
-
-    async function savePerms() {
-        let selected = [];
-        document.querySelectorAll('.perm-check:checked').forEach(cb => selected.push(cb.value));
-        let updateData = {};
-        if(currentPermType === 'notice') updateData.noticeAdmins = selected; else updateData.statusAdmins = selected;
-        await db.collection("teams").doc(myTeamId).update(updateData);
-        permModalInst.hide();
-        alert("담당자 권한이 성공적으로 저장되었습니다.\n(새로고침 시 권한이 반영됩니다.)");
-        location.reload(); 
-    }
 
     // 💡 V1.4.1: 게시판 (공지/전달내용) - 상황판 편집 모드와 관리 UI 완전 동기화 + 삭제 버튼 레이아웃 고정 💡
     let noticeSortable = null;
@@ -1018,22 +993,6 @@
     let globalStatusData = [];
 
 
-    // 펀치리스트
-
-
-    // T5 계산기
-    function toggleT5Specs() { const el = document.getElementById('t5-spec-container'); el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
-    function addNewSpec() { let n=prompt("규격"), a=prompt("치수"); if(n&&a) document.getElementById('t5-spec-list').insertAdjacentHTML('beforeend', `<div class="col-4 col-md-auto spec-item"><label class="small">${n}용</label><input type="number" class="form-control input-dark spec-actual" data-nominal="${n}" value="${a}"></div>`); }
-    function addT5Row() { document.getElementById('t5-input-container').insertAdjacentHTML('beforeend', `<div class="row g-2 mb-2 t5-row-item"><div class="col-6"><input type="text" class="form-control input-dark t5-section-name" placeholder="구간 (예: 거실)"></div><div class="col-6"><input type="number" class="form-control input-dark t5-length-val" placeholder="길이 (mm)"></div></div>`); }
-    let calculatedData = null; let t5EditingId = null;
-
-    async function deleteT5Log(id) { if(confirm("삭제하시겠습니까?")) await db.collection("t5_logs").doc(id).delete(); }
-
-
-
-
-    document.getElementById('logMonth').onchange = renderAllTeams; 
-    document.getElementById('logMonth').value = new Date().toISOString().substring(0, 7);
 </script>
 
 <!-- 💡 이전버전: 공정표 커스텀 툴팁 (단일 인스턴스, 모든 메모 셀이 공유) 💡 -->
