@@ -970,62 +970,6 @@
 <script src="js/auth.js"></script>
 
 <script>
-    auth.onAuthStateChanged(async user => {
-        if (user) {
-            myEmail = user.email; document.getElementById('auth-overlay').style.display = 'none';
-            const uDoc = await db.collection("users").doc(myEmail).get(); userNickname = uDoc.exists ? uDoc.data().nickname : "관리자";
-            document.getElementById('userNickDisplay').innerText = userNickname;
-            
-            const q = await db.collection("teams").where("members", "array-contains", myEmail).get();
-            if (!q.empty) { 
-                const tDoc = q.docs[0]; myTeamId = tDoc.id; const tData = tDoc.data();
-                if(tData.owner === myEmail || myEmail === "idong2300@naver.com") myRole = "owner";
-                else if(tData.admins && tData.admins.includes(myEmail)) myRole = "admin";
-                else myRole = "member";
-                document.getElementById('userRoleDisplay').innerText = myRole === "owner" ? "에디터 (최고권한)" : (myRole === "admin" ? "관리자" : "팀원");
-
-                globalNoticeAdmins = tData.noticeAdmins || [];
-                globalStatusAdmins = tData.statusAdmins || [];
-                applyRoleRestrictions();
-
-                const members = tData.members || [];
-                await Promise.all(members.map(async m => {
-                    try { const u = await db.collection("users").doc(m).get(); globalEmailToNick[m] = u.exists ? u.data().nickname : m.split('@')[0]; }
-                    catch(e) { globalEmailToNick[m] = m.split('@')[0]; }
-                }));
-
-                loadBoardMemos(); loadAllStatusData(); loadGanttList(); loadWorklogs(); loadPunchSummaryCards(); loadT5History(); loadMemos(); 
-            }
-            checkTeamUI(); 
-        } else { document.getElementById('auth-overlay').style.display = 'flex'; }
-    });
-
-    function toggleAuthMode() { isLoginMode = !isLoginMode; document.getElementById('auth-title').innerText = isLoginMode ? "접속" : "가입"; document.getElementById('userNick').style.display = isLoginMode ? "none" : "block"; }
-    
-    async function handleAuth() { 
-        const e=document.getElementById('userEmail').value, p=document.getElementById('userPw').value, n=document.getElementById('userNick').value; 
-        const keepAlive = document.getElementById('autoLoginCheck') ? document.getElementById('autoLoginCheck').checked : true;
-        try { 
-            await auth.setPersistence(keepAlive ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
-            if(isLoginMode) await auth.signInWithEmailAndPassword(e,p); 
-            else { await auth.createUserWithEmailAndPassword(e,p); await db.collection("users").doc(e).set({ nickname:n, email:e, createdAt:Date.now()}); } 
-        } catch(err){alert(err.message);} 
-    }
-    
-    // 💡 V30: 비밀번호 찾기 기능 정상화 💡
-    async function resetPassword() {
-        const e = document.getElementById('userEmail').value.trim();
-        if(!e) return alert("비밀번호를 찾을 이메일을 먼저 입력해주세요.");
-        try {
-            await auth.sendPasswordResetEmail(e);
-            alert("입력하신 이메일로 비밀번호 재설정 링크를 발송했습니다. 이메일함을 확인해주세요!");
-        } catch(err) {
-            alert("이메일 발송 실패: " + err.message);
-        }
-    }
-    
-    async function handleLogout() { if(confirm("로그아웃 하시겠습니까?")) { await auth.signOut(); location.reload(); } }
-
     async function openPermModal(type) {
         currentPermType = type;
         document.getElementById('permModalTitle').innerText = type === 'notice' ? '공지사항 담당자 설정' : '종합 상황판 담당자 설정';
@@ -2108,24 +2052,6 @@ const sections = [
     async function regenerateInviteCode() { if(confirm("기존 코드는 즉시 무효화됩니다. 계속하시겠습니까?")) { const c = Math.random().toString(36).substring(2, 8).toUpperCase(); await db.collection("teams").doc(myTeamId).update({ inviteCode: c }); document.getElementById('displayTeamId').value = c; alert("발급되었습니다!"); } }
     async function kickMember(tEmail) { if(confirm("팀에서 내보내시겠습니까?")) { const tDoc = await db.collection("teams").doc(myTeamId).get(); let m = tDoc.data().members.filter(x => x !== tEmail); let a = (tDoc.data().admins || []).filter(x => x !== tEmail); await db.collection("teams").doc(myTeamId).update({ members: m, admins: a }); loadTeamMembers(); alert("팀원이 삭제되었습니다."); } }
     async function toggleAdmin(tEmail, isPro) { const tDoc = await db.collection("teams").doc(myTeamId).get(); let a = tDoc.data().admins || []; if(isPro) { if(!a.includes(tEmail)) a.push(tEmail); } else { a = a.filter(x => x !== tEmail); } await db.collection("teams").doc(myTeamId).update({ admins: a }); loadTeamMembers(); }
-
-    // 내 정보 수정
-    async function updateProfile() { await db.collection("users").doc(myEmail).update({ nickname: document.getElementById('editNickname').value }); location.reload(); }
-    // 💡 V31 FIX: Clipboard API 최신 방식으로 업그레이드 (execCommand deprecated 대응) 💡
-    function copyText(t) { 
-        if(navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(t).then(() => alert("복사됨")).catch(() => fallbackCopy(t));
-        } else {
-            fallbackCopy(t);
-        }
-    }
-    function fallbackCopy(t) {
-        const ta = document.createElement("textarea"); ta.value = t; ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); alert("복사됨"); } catch(e) { alert("복사 실패: 수동으로 복사해주세요."); }
-        document.body.removeChild(ta);
-    }
-    async function changePassword() { try { await auth.currentUser.updatePassword(document.getElementById('newPasswordInput').value); alert("성공"); } catch(e){ alert(e.message); } }
 
     document.getElementById('logMonth').onchange = renderAllTeams; 
     document.getElementById('logMonth').value = new Date().toISOString().substring(0, 7);
