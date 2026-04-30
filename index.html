@@ -966,78 +966,10 @@
 <!-- 💡 V32: SortableJS - 드래그앤드롭 순서 편집용 💡 -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
-<!--
 <script src="js/main.js"></script>
 <script src="js/auth.js"></script>
--->
 
 <script>
-    let myEmail, myTeamId, userNickname = "관리자";
-    let isLoginMode = true; let myRole = "member"; 
-    let globalEmailToNick = {}; 
-    let siteModal, ganttModal, permModalInst;
-    
-    let globalNoticeAdmins = [];
-    let globalStatusAdmins = [];
-    let currentPermType = '';
-    
-    // 💡 V30: 작업일보 아코디언 상태 보존용 메모리 객체 💡
-    let worklogCollapsedStates = {};
-
-    // 💡 V1.4.0: 작업일보 기본 4대 공정 고정 세팅 (목수/도장/전기/필름) 💡
-    const DEFAULT_WORKLOG_TEAMS = ["목수", "도장", "전기", "필름"];
-
-    function createDefaultTeamData() {
-        return DEFAULT_WORKLOG_TEAMS.map(teamName => ({ teamName, workers: [] }));
-    }
-
-    function normalizeTeamData(source) {
-        const safeSource = Array.isArray(source) ? source : [];
-        const normalized = createDefaultTeamData();
-        const defaultNames = new Set(DEFAULT_WORKLOG_TEAMS);
-
-        safeSource.forEach(team => {
-            if(!team || !team.teamName) return;
-            const safeTeam = {
-                teamName: team.teamName,
-                workers: Array.isArray(team.workers) ? team.workers : []
-            };
-
-            const defaultIndex = normalized.findIndex(t => t.teamName === safeTeam.teamName);
-            if(defaultIndex >= 0) normalized[defaultIndex] = safeTeam;
-            else if(!defaultNames.has(safeTeam.teamName)) normalized.push(safeTeam);
-        });
-
-        return normalized;
-    }
-
-    let teamData = createDefaultTeamData();
-
-    document.addEventListener("DOMContentLoaded", function() { 
-        siteModal = new bootstrap.Modal(document.getElementById('siteModal')); 
-        ganttModal = new bootstrap.Modal(document.getElementById('ganttCreateModal')); 
-        permModalInst = new bootstrap.Modal(document.getElementById('permModal')); 
-        
-        let savedTheme = localStorage.getItem('kimmoksu_theme');
-        if(savedTheme === 'light') { document.body.classList.add('light-mode'); updateThemeUI(true); } 
-        else { updateThemeUI(false); }
-
-        // 💡 V1.4.0: 작업일보 첫 진입 전에도 기본 4대 공종이 비어 있지 않도록 선렌더링
-        resetWorklogForm();
-    });
-    
-    function toggleTheme() {
-        let isLight = document.body.classList.toggle('light-mode');
-        localStorage.setItem('kimmoksu_theme', isLight ? 'light' : 'dark');
-        updateThemeUI(isLight);
-    }
-    
-    function updateThemeUI(isLight) {
-        const btn = document.getElementById('themeToggleBtn');
-        if(isLight) { btn.innerHTML = '<i class="bi bi-moon-fill"></i> <span>블랙 모드로 전환</span>'; btn.classList.replace('btn-outline-secondary', 'btn-outline-dark'); } 
-        else { btn.innerHTML = '<i class="bi bi-brightness-high-fill"></i> <span>화이트 모드로 전환</span>'; btn.classList.replace('btn-outline-dark', 'btn-outline-secondary'); }
-    }
-
     function showPage(pageId, el, pushState = true, options = {}) {
         const preserveState = !!(options && options.preserveState);
 
