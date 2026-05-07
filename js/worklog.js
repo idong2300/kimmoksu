@@ -1,5 +1,32 @@
     // 작업일보 (V30: 우측 정렬 + 아코디언 상태 보존 로직 추가)
-    let editingId = null; 
+    let editingId = null;
+    let activeWorklogFilter = "mine";
+    let cachedWorklogs = [];
+
+    function canCompleteWorklog() {
+        return myRole === "owner" || myRole === "admin" || globalWorklogAdmins.includes(myEmail);
+    }
+    
+    function switchWorklogFilter(filter, btn) {
+        activeWorklogFilter = filter;
+    
+        document.querySelectorAll('.worklog-filter-btn').forEach(b => {
+            b.classList.remove('btn-primary', 'btn-success', 'btn-outline-secondary', 'btn-outline-success');
+            b.classList.add('btn-outline-secondary');
+        });
+    
+        if (btn) {
+            btn.classList.remove('btn-outline-secondary', 'btn-outline-success');
+    
+            if (filter === 'done') {
+                btn.classList.add('btn-success');
+            } else {
+                btn.classList.add('btn-primary');
+            }
+        }
+    
+        renderWorklogHistory();
+    }
     
     function renderAllTeams() {
         const container = document.getElementById('team-container'); 
@@ -92,14 +119,165 @@
     function addTeam() { const n = prompt("공정명"); if(n){ teamData.push({teamName:n, workers:[]}); renderAllTeams(); } }
     function addWorker(t) { teamData[t].workers.push({name:"", days:{}}); renderAllTeams(); }
     function removeWorker(t, w) { if(confirm("삭제하시겠습니까?")){ teamData[t].workers.splice(w,1); renderAllTeams(); } }
-    async function saveMonthlyLog() { const m = document.getElementById('logMonth').value, s = document.getElementById('siteName').value; if(!s) return; const d = { teamId:myTeamId, month:m, site:s, teamData:teamData, updatedAt:Date.now(), lastModifier:userNickname }; if(editingId) await db.collection("monthly_logs").doc(editingId).update(d); else await db.collection("monthly_logs").add({...d, originalWriter:userNickname}); alert("저장 완료"); location.reload(); }
-    function loadWorklogs() { db.collection("monthly_logs").where("teamId","==",myTeamId).orderBy("updatedAt","desc").limit(10).onSnapshot(ss => { document.getElementById('history-list').innerHTML = ss.docs.map(doc => { const d = doc.data(); 
+
+    async function saveMonthlyLog() {
+        const m = document.getElementById('logMonth').value;
+        const s = document.getElementById('siteName').value;
+    
+        if (!s) return;
+    
+        const d = {
+            teamId: myTeamId,
+            month: m,
+            site: s,
+            teamData: teamData,
+            updatedAt: Date.now(),
+            lastModifier: userNickname,
+            lastModifierEmail: myEmail
+        };
+    
+        if (editingId) {
+            await db.collection("monthly_logs").doc(editingId).update(d);
+        } else {
+            await db.collection("monthly_logs").add({
+                ...d,
+                originalWriter: userNickname,
+                writerEmail: myEmail,
+                isCompleted: false,
+                completedAt: null,
+                completedBy: null
+            });
+        }
+    
+        alert("저장 완료");
+        location.reload();
+    }
+
+    function loadWorklogs() {
+        db.collection("monthly_logs")
+            .where("teamId", "==", myTeamId)
+            .orderBy("updatedAt", "desc")
+            .limit(50)
+            .onSnapshot(ss => {
+                cachedWorklogs = ss.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+    
+                renderWorklogHistory();
+            });
+    }
+    
+    function renderWorklogHistory() {
+        const historyList = document.getElementById('history-list');
+        if (!historyList) return;
+    
+        let list = cachedWorklogs;
+    
+        if (activeWorklogFilter === "mine") {
+            list = cachedWorklogs.filter(log =>
+                !log.isCompleted &&
+                (log.writerEmail === myEmail || log.originalWriter === userNickname)
+            );
+        } else if (activeWorklogFilter === "all") {
+            list = cachedWorklogs.filter(log => !log.isCompleted);
+        } else if (activeWorklogFilter === "done") {
+            list = cachedWorklogs.filter(log => log.isCompleted);
+        }
+    
+        if (list.length === 0) {
+            historyList.innerHTML = `
+                <div class="col-12">
+                    <div class="t5-card p-4 text-center text-secondary">
+                        표시할 작업일보가 없습니다.
+                    </div>
+                </div>
+            `;
+            return;
+        }
+    
+        historyList.innerHTML = list.map(d => {
+            const canDelete = myRole !== 'member';
+            const canComplete = canCompleteWorklog();
+    
+            let delBtnHtml = canDelete
+                ? `<button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${d.id}')">삭제</button>`
+                : '';
+    
+            let completeBtnHtml = '';
+    
+            if (canComplete && !d.isCompleted) {
+                completeBtnHtml = `<button class="t5-btn-small bg-warning text-dark" onclick="completeWorklog('${d.id}')">완료 처리</button>`;
+            } else if (canComplete && d.isCompleted) {
+                completeBtnHtml = `<button class="t5-btn-small bg-info text-white" onclick="reopenWorklog('${d.id}')">완료 해제</button>`;
+            }
+    
+            const completedBadge = d.isCompleted
+                ? `<span class="badge bg-success ms-2">완료</span>`
+                : '';
+    
+            const completedInfo = d.isCompleted
+                ? `<br><span class="small text-success">완료자: ${d.completedBy || '-'}</span>`
+                : '';
+    
+            let btnHtml = `
+                <button class="t5-btn-small bg-secondary text-white" onclick="editLog('${d.id}')">수정</button>
+                <button class="t5-btn-small bg-primary text-white" onclick="copyLog('${d.id}')">복사</button>
+                <button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${d.id}')">엑셀</button>
+                ${completeBtnHtml}
+                ${delBtnHtml}
+            `;
+    
+            return `
+                <div class="col-md-6">
+                    <div class="t5-card p-3 m-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <b class="text-primary">${d.month}</b>${completedBadge}<br>
+                            ${d.site}<br>
+                            <span class="small text-secondary">
+                                작성: ${d.originalWriter || '관리자'}
+                                ${d.lastModifier ? `/ 수정: ${d.lastModifier}` : ''}
+                            </span>
+                            ${completedInfo}
+                        </div>
+                        <div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">
+                            ${btnHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+                                                                                                                                                                                                                           
         let delBtnHtml = (myRole !== 'member') ? `<button class="t5-btn-small bg-danger text-white" onclick="deleteLog('${doc.id}')">삭제</button>` : '';
         let btnHtml = `<button class="t5-btn-small bg-secondary text-white" onclick="editLog('${doc.id}')">수정</button><button class="t5-btn-small bg-primary text-white" onclick="copyLog('${doc.id}')">복사</button><button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${doc.id}')">엑셀</button>${delBtnHtml}`; 
         return `<div class="col-md-6"><div class="t5-card p-3 m-0 d-flex justify-content-between align-items-center"><div><b class="text-primary">${d.month}</b><br>${d.site}<br><span class="small text-secondary">작성: ${d.originalWriter||'관리자'} ${d.lastModifier?`/ 수정: ${d.lastModifier}`:''}</span></div><div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 60%;">${btnHtml}</div></div></div>`; }).join(''); }); }
     async function editLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = d.teamData || []; showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); window.scrollTo(0,0); }
     async function copyLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = d.teamData || []; showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); alert("데이터가 복사되었습니다."); window.scrollTo(0,0); }
     async function deleteLog(id) { if(confirm("이 작업일보를 완전히 삭제하시겠습니까?")) { await db.collection("monthly_logs").doc(id).delete(); } }
+
+    async function completeWorklog(id) {
+        if (!canCompleteWorklog()) return alert("완료 처리 권한이 없습니다.");
+        if (!confirm("이 작업일보를 완료 처리하시겠습니까?")) return;
+    
+        await db.collection("monthly_logs").doc(id).update({
+            isCompleted: true,
+            completedAt: Date.now(),
+            completedBy: myEmail
+        });
+    }
+    
+    async function reopenWorklog(id) {
+        if (!canCompleteWorklog()) return alert("완료 해제 권한이 없습니다.");
+        if (!confirm("이 작업일보의 완료 상태를 해제하시겠습니까?")) return;
+    
+        await db.collection("monthly_logs").doc(id).update({
+            isCompleted: false,
+            completedAt: null,
+            completedBy: null
+        });
+    }
+
     async function exportToExcel(id) { 
         const d_raw = (await db.collection("monthly_logs").doc(id).get()).data(); const [year, monthNum] = d_raw.month.split('-'); const lastDayNum = new Date(year, monthNum, 0).getDate(); 
         const wb = XLSX.utils.book_new(); 
@@ -138,3 +316,8 @@ window.editLog = editLog;
 window.copyLog = copyLog;
 window.deleteLog = deleteLog;
 window.exportToExcel = exportToExcel;
+window.canCompleteWorklog = canCompleteWorklog;
+window.switchWorklogFilter = switchWorklogFilter;
+window.renderWorklogHistory = renderWorklogHistory;
+window.completeWorklog = completeWorklog;
+window.reopenWorklog = reopenWorklog;
