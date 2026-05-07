@@ -234,19 +234,18 @@
                 ? `<br><span class="small text-success">완료자: ${d.completedBy || '-'}</span>`
                 : '';
     
-            let extraBtnHtml = isWorklogListEditMode
-                ? `
-                    <button class="t5-btn-small bg-primary text-white" onclick="copyLog('${d.id}')">복사</button>
-                    <button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${d.id}')">엑셀</button>
-                    ${completeBtnHtml}
-                    ${delBtnHtml}
-                `
-                : '';
-            
-            let btnHtml = `
+            let normalBtnHtml = `
                 <button class="t5-btn-small bg-secondary text-white" onclick="editLog('${d.id}')">수정</button>
-                ${extraBtnHtml}
+                <button class="t5-btn-small bg-primary text-white" onclick="copyLog('${d.id}')">복사</button>
+                <button class="t5-btn-small bg-success text-white" onclick="exportToExcel('${d.id}')">엑셀</button>
+                ${delBtnHtml}
             `;
+            
+            let completeModeBtnHtml = completeBtnHtml || `
+                <span class="small text-secondary px-2">완료 권한 없음</span>
+            `;
+            
+            let btnHtml = isWorklogListEditMode ? completeModeBtnHtml : normalBtnHtml;
     
             return `
                 <div class="col-md-6">
