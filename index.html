@@ -306,6 +306,17 @@
         
         .monthly-list-box { background: #181b24; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); padding: 15px; }
 
+        .modal-backdrop-custom {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
         #addTaskModal, #ganttCreateModal, #permModal, #memoCreateModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(2px); animation: fadeIn 0.2s; }
         .modal-box { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
