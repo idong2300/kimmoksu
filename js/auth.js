@@ -48,6 +48,10 @@ auth.onAuthStateChanged(async user => {
             loadAllStatusData();
             loadGanttList();
             loadWorklogs();
+            
+            if (typeof initLeaveCalendarSelects === "function") initLeaveCalendarSelects();
+            if (typeof loadLeaveData === "function") loadLeaveData(tData);
+            
             loadPunchSummaryCards();
             loadT5History();
             loadMemos();
