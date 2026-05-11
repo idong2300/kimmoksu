@@ -3,33 +3,53 @@
 // 역할: 연차 관리, 신청, 달력, 승인, 잔여 연차 계산
 // =====================================================
 
-
-    let myEmail, myTeamId, userNickname = "관리자", myRole = "member";
-    let globalEmailToNick = {};
-    let teamMembersInfo = {}; 
+    
+    let teamMembersInfo = {};
     let globalLeaveRecords = [];
 
-    document.addEventListener("DOMContentLoaded", () => {
-        let yrHtml = '', moHtml = '';
-        let ty = new Date().getFullYear();
-        for(let y = ty - 1; y <= ty + 5; y++) yrHtml += `<option value="${y}">${y}년</option>`;
-        for(let m = 1; m <= 12; m++) moHtml += `<option value="${m}">${m}월</option>`;
-        document.getElementById('calYear').innerHTML = yrHtml;
-        document.getElementById('calMonth').innerHTML = moHtml;
-        
-        let td = new Date();
-        document.getElementById('calYear').value = td.getFullYear();
-        document.getElementById('calMonth').value = td.getMonth() + 1;
+function initLeaveCalendarSelects() {
+    const yearEl = document.getElementById('calYear');
+    const monthEl = document.getElementById('calMonth');
 
-        let savedTheme = localStorage.getItem('kimmoksu_theme');
-        if(savedTheme === 'light') document.body.classList.add('light-mode');
-    });
+    if (!yearEl || !monthEl) return;
 
-    function toggleTheme() {
-        let isLight = document.body.classList.toggle('light-mode');
-        localStorage.setItem('kimmoksu_theme', isLight ? 'light' : 'dark');
+    let yrHtml = '';
+    let moHtml = '';
+    let ty = new Date().getFullYear();
+
+    for (let y = ty - 1; y <= ty + 5; y++) {
+        yrHtml += `<option value="${y}">${y}년</option>`;
     }
 
+    for (let m = 1; m <= 12; m++) {
+        moHtml += `<option value="${m}">${m}월</option>`;
+    }
+
+    yearEl.innerHTML = yrHtml;
+    monthEl.innerHTML = moHtml;
+
+    let td = new Date();
+    yearEl.value = td.getFullYear();
+    monthEl.value = td.getMonth() + 1;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    initLeaveCalendarSelects();
+
+    if (window.LEAVE_STANDALONE) {
+        let savedTheme = localStorage.getItem('kimmoksu_theme');
+        if (savedTheme === 'light') document.body.classList.add('light-mode');
+    }
+});
+
+        if (window.LEAVE_STANDALONE) {
+            window.toggleTheme = function () {
+                let isLight = document.body.classList.toggle('light-mode');
+                localStorage.setItem('kimmoksu_theme', isLight ? 'light' : 'dark');
+            };
+        }
+
+if (window.LEAVE_STANDALONE) {
     auth.onAuthStateChanged(async user => {
         if (user) {
             myEmail = user.email; 
@@ -40,42 +60,67 @@
             
             const q = await db.collection("teams").where("members", "array-contains", myEmail).get();
             if (!q.empty) { 
-                const tDoc = q.docs[0]; myTeamId = tDoc.id; const tData = tDoc.data();
+                const tDoc = q.docs[0];
+                myTeamId = tDoc.id;
+                const tData = tDoc.data();
                 
                 if(tData.owner === myEmail || myEmail === "idong2300@naver.com") myRole = "owner";
                 else if(tData.admins && tData.admins.includes(myEmail)) myRole = "admin";
                 else myRole = "member";
                 
-                document.getElementById('userRoleDisplay').innerText = myRole === "owner" ? "에디터 (최고권한)" : (myRole === "admin" ? "관리자" : "팀원");
+                document.getElementById('userRoleDisplay').innerText =
+                    myRole === "owner" ? "에디터 (최고권한)" :
+                    (myRole === "admin" ? "관리자" : "팀원");
 
                 const members = tData.members || [];
                 await Promise.all(members.map(async m => {
-                    try { const u = await db.collection("users").doc(m).get(); globalEmailToNick[m] = u.exists ? u.data().nickname : m.split('@')[0]; }
-                    catch(e) { globalEmailToNick[m] = m.split('@')[0]; }
+                    try {
+                        const u = await db.collection("users").doc(m).get();
+                        globalEmailToNick[m] = u.exists ? u.data().nickname : m.split('@')[0];
+                    } catch(e) {
+                        globalEmailToNick[m] = m.split('@')[0];
+                    }
                 }));
 
                 loadLeaveData(tData);
             }
-        } else { document.getElementById('auth-overlay').style.display = 'flex'; }
+        } else {
+            document.getElementById('auth-overlay').style.display = 'flex';
+        }
     });
+}
 
-    async function handleAuth() { 
-        const e=document.getElementById('userEmail').value, p=document.getElementById('userPw').value; 
+if (window.LEAVE_STANDALONE) {
+    window.handleAuth = async function () {
+        const e = document.getElementById('userEmail').value;
+        const p = document.getElementById('userPw').value;
         const keepAlive = document.getElementById('autoLoginCheck') ? document.getElementById('autoLoginCheck').checked : true;
-        try { 
-            await auth.setPersistence(keepAlive ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
-            await auth.signInWithEmailAndPassword(e,p); 
-        } catch(err){alert(err.message);} 
-    }
-    
-    async function resetPassword() {
+
+        try {
+            await auth.setPersistence(
+                keepAlive
+                    ? firebase.auth.Auth.Persistence.LOCAL
+                    : firebase.auth.Auth.Persistence.SESSION
+            );
+            await auth.signInWithEmailAndPassword(e, p);
+        } catch(err) {
+            alert(err.message);
+        }
+    };
+
+    window.resetPassword = async function () {
         const e = document.getElementById('userEmail').value.trim();
-        if(!e) return alert("비밀번호를 찾을 이메일을 먼저 입력해주세요.");
+
+        if (!e) return alert("비밀번호를 찾을 이메일을 먼저 입력해주세요.");
+
         try {
             await auth.sendPasswordResetEmail(e);
             alert("입력하신 이메일로 비밀번호 재설정 링크를 발송했습니다.");
-        } catch(err) { alert("이메일 발송 실패: " + err.message); }
-    }
+        } catch(err) {
+            alert("이메일 발송 실패: " + err.message);
+        }
+    };
+}
 
     // ============================================================
     // 💡 V1.4.1: 연차 자동 계산 핵심 함수 (회계연도 = 매년 1월 1일 기준) 💡
