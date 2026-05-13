@@ -830,30 +830,30 @@ if (window.LEAVE_STANDALONE) {
     
             // 템플릿 기준 좌표. 실제 출력 결과 보고 5~20px씩 조정 가능.
             const P = {
-                name: [335, 247],
-                department: [755, 247],
-                position: [335, 318],
-                duty: [755, 318],
+                name: [335, 240],
+                department: [755, 240],
+                position: [335, 305],
+                duty: [755, 305],
             
-                startYear: [346, 425],
-                startMonth: [446, 425],
-                startDay: [520, 425],
-                endYear: [635, 425],
-                endMonth: [731, 425],
-                endDay: [807, 425],
+                startYear: [345, 418],
+                startMonth: [390, 418],
+                startDay: [440, 418],
+                endYear: [530, 418],
+                endMonth: [572, 418],
+                endDay: [618, 418],
             
-                requestDays: [332, 493],
-                remainDays: [332, 558],
+                requestDays: [332, 495],
+                remainDays: [332, 560],
             
                 reason: [88, 710],
                 substitute: [220, 1115],
                 emergencyPhone: [220, 1180],
             
-                statementYear: [352, 1292],
-                applyYear: [447, 1368],
-                applyMonth: [545, 1368],
-                applyDay: [620, 1368],
-                applicant: [850, 1450]
+                statementYear: [345, 1282],
+                applyYear: [442, 1352],
+                applyMonth: [505, 1352],
+                applyDay: [560, 1352],
+                applicant: [890, 1420]
             };
     
             drawCenteredText(ctx, applicantName, ...P.name, { size: 18 });
