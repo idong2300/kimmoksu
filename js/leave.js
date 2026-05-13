@@ -830,21 +830,21 @@ if (window.LEAVE_STANDALONE) {
     
             // 템플릿 기준 좌표. 실제 출력 결과 보고 5~20px씩 조정 가능.
             const P = {
-                name: [445, 255],
-                department: [845, 255],
-                position: [445, 340],
-                duty: [845, 340],
+                name: [330, 235],
+                department: [760, 235],
+                position: [330, 325],
+                duty: [760, 325],
             
-                leavePeriod: [585, 462],
-                requestDays: [445, 545],
-                remainDays: [445, 630],
+                leavePeriod: [400, 435],
+                requestDays: [400, 510],
+                remainDays: [400, 590],
             
                 reason: [95, 790],
-                substitute: [255, 1198],
-                emergencyPhone: [255, 1262],
+                substitute: [255, 1150],
+                emergencyPhone: [255, 1215],
             
-                statement: [543, 1322],
-                applyDate: [543, 1378],
+                statement: [543, 1280],
+                applyDate: [543, 1320],
                 applicant: [870, 1415]
             };
     
