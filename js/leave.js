@@ -835,57 +835,57 @@ if (window.LEAVE_STANDALONE) {
                 position: [335, 318],
                 duty: [755, 318],
             
-                startYear: [333, 432],
-                startMonth: [425, 432],
-                startDay: [500, 432],
-                endYear: [620, 432],
-                endMonth: [710, 432],
-                endDay: [790, 432],
+                startYear: [330, 414],
+                startMonth: [425, 414],
+                startDay: [500, 414],
+                endYear: [615, 414],
+                endMonth: [710, 414],
+                endDay: [790, 414],
             
-                requestDays: [335, 493],
-                remainDays: [335, 558],
+                requestDays: [335, 483],
+                remainDays: [335, 548],
             
                 reason: [88, 710],
-                substitute: [220, 1118],
-                emergencyPhone: [220, 1183],
+                substitute: [220, 1115],
+                emergencyPhone: [220, 1180],
             
-                statementYear: [318, 1293],
-                applyYear: [432, 1368],
-                applyMonth: [542, 1368],
-                applyDay: [640, 1368],
-                applicant: [870, 1442]
+                statementYear: [334, 1288],
+                applyYear: [432, 1360],
+                applyMonth: [525, 1360],
+                applyDay: [598, 1360],
+                applicant: [870, 1438]
             };
     
-            drawCenteredText(ctx, applicantName, ...P.name, { size: 16 });
-            drawCenteredText(ctx, department, ...P.department, { size: 16 });
-            drawCenteredText(ctx, position, ...P.position, { size: 16 });
-            drawCenteredText(ctx, duty, ...P.duty, { size: 16 });
+            drawCenteredText(ctx, applicantName, ...P.name, { size: 18 });
+            drawCenteredText(ctx, department, ...P.department, { size: 18 });
+            drawCenteredText(ctx, position, ...P.position, { size: 18 });
+            drawCenteredText(ctx, duty, ...P.duty, { size: 18 });
     
-            drawCenteredText(ctx, leaveDate.yy, ...P.startYear, { size: 15 });
-            drawCenteredText(ctx, leaveDate.month, ...P.startMonth, { size: 15 });
-            drawCenteredText(ctx, leaveDate.day, ...P.startDay, { size: 15 });
-            drawCenteredText(ctx, leaveDate.yy, ...P.endYear, { size: 15 });
-            drawCenteredText(ctx, leaveDate.month, ...P.endMonth, { size: 15 });
-            drawCenteredText(ctx, leaveDate.day, ...P.endDay, { size: 15 });
+            drawCenteredText(ctx, leaveDate.yy, ...P.startYear, { size: 17 });
+            drawCenteredText(ctx, leaveDate.month, ...P.startMonth, { size: 17 });
+            drawCenteredText(ctx, leaveDate.day, ...P.startDay, { size: 17 });
+            drawCenteredText(ctx, leaveDate.yy, ...P.endYear, { size: 17 });
+            drawCenteredText(ctx, leaveDate.month, ...P.endMonth, { size: 17 });
+            drawCenteredText(ctx, leaveDate.day, ...P.endDay, { size: 17 });
             
-            drawCenteredText(ctx, leaveDays, ...P.requestDays, { size: 16 });
-            drawCenteredText(ctx, remainDays, ...P.remainDays, { size: 16 });
+            drawCenteredText(ctx, leaveDays, ...P.requestDays, { size: 18 });
+            drawCenteredText(ctx, remainDays, ...P.remainDays, { size: 18 });    
     
             const reasonText = leaveTypeText
                 ? `${leaveTypeText}${reason ? " / " + reason : ""}`
                 : reason;
     
-            drawWrappedText(ctx, reasonText, P.reason[0], P.reason[1], 820, 34, { size: 18 });
-            drawCenteredText(ctx, substitute, ...P.substitute, { size: 16, align: "left" });
-            drawCenteredText(ctx, emergencyPhone, ...P.emergencyPhone, { size: 16, align: "left" });
+            drawWrappedText(ctx, reasonText, P.reason[0], P.reason[1], 820, 34, { size: 21 });
+            drawCenteredText(ctx, substitute, ...P.substitute, { size: 18, align: "left" });
+            drawCenteredText(ctx, emergencyPhone, ...P.emergencyPhone, { size: 18, align: "left" });
             
-            drawCenteredText(ctx, leaveDate.yy, ...P.statementYear, { size: 16 });
+            drawCenteredText(ctx, leaveDate.yy, ...P.statementYear, { size: 18 });
             
-            drawCenteredText(ctx, applyDate.yy, ...P.applyYear, { size: 16 });
-            drawCenteredText(ctx, applyDate.month, ...P.applyMonth, { size: 16 });
-            drawCenteredText(ctx, applyDate.day, ...P.applyDay, { size: 16 });
+            drawCenteredText(ctx, applyDate.yy, ...P.applyYear, { size: 18 });
+            drawCenteredText(ctx, applyDate.month, ...P.applyMonth, { size: 18 });
+            drawCenteredText(ctx, applyDate.day, ...P.applyDay, { size: 18 });
             
-            drawCenteredText(ctx, applicantName, ...P.applicant, { size: 16 });
+            drawCenteredText(ctx, applicantName, ...P.applicant, { size: 18 });
     
             const imgData = canvas.toDataURL("image/png");
             const { jsPDF } = window.jspdf;
