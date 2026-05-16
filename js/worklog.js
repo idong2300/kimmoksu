@@ -5,6 +5,7 @@
     let isWorklogListEditMode = false;
     let worklogInputMode = "monthly";
     let selectedWorklogDay = new Date().getDate();
+    let dailyVisibleWorkerKeys = {};
 
     function canCompleteWorklog() {
         return myRole === "owner" || myRole === "admin" || globalWorklogAdmins.includes(myEmail);
@@ -22,13 +23,76 @@
         if (!Number.isFinite(selectedWorklogDay) || selectedWorklogDay < 1) selectedWorklogDay = 1;
         if (selectedWorklogDay > lastDay) selectedWorklogDay = lastDay;
     
-        return { year: safeYear, month: safeMonth, lastDay };
+        return {
+            year: safeYear,
+            month: safeMonth,
+            lastDay,
+            key: `${safeYear}-${String(safeMonth).padStart(2, '0')}`
+        };
     }
     
     function formatWorklogDayLabel(year, month, day) {
         const weekNames = ['일', '월', '화', '수', '목', '금', '토'];
         const week = weekNames[new Date(year, month - 1, day).getDay()];
         return `${year}년 ${month}월 ${day}일 (${week})`;
+    }
+
+    function getDailyVisibleKey(day = selectedWorklogDay) {
+        const info = getSelectedWorklogMonthInfo();
+        return `${info.key || `${info.year}-${String(info.month).padStart(2, '0')}`}-${String(day).padStart(2, '0')}`;
+    }
+    
+    function getWorkerKey(tIdx, wIdx) {
+        return `${tIdx}_${wIdx}`;
+    }
+    
+    function hasWorklogValue(value) {
+        return Number(parseFloat(value || 0)) > 0;
+    }
+    
+    function getDailyVisibleSet(day = selectedWorklogDay) {
+        const key = getDailyVisibleKey(day);
+        if (!dailyVisibleWorkerKeys[key]) dailyVisibleWorkerKeys[key] = new Set();
+        return dailyVisibleWorkerKeys[key];
+    }
+    
+    function markDailyWorkerVisible(tIdx, wIdx, day = selectedWorklogDay) {
+        getDailyVisibleSet(day).add(getWorkerKey(tIdx, wIdx));
+    }
+    
+    function shouldShowDailyWorker(tIdx, wIdx, worker, day = selectedWorklogDay) {
+        const days = worker && worker.days && typeof worker.days === 'object' ? worker.days : {};
+        return hasWorklogValue(days[day]) || getDailyVisibleSet(day).has(getWorkerKey(tIdx, wIdx));
+    }
+    
+    function copyPreviousDayWorkers() {
+        if (selectedWorklogDay <= 1) {
+            alert('1일은 전일 작업자를 불러올 수 없습니다.');
+            return;
+        }
+    
+        const prevDay = selectedWorklogDay - 1;
+        let copiedCount = 0;
+    
+        teamData.forEach((team, tIdx) => {
+            const workers = Array.isArray(team.workers) ? team.workers : [];
+    
+            workers.forEach((worker, wIdx) => {
+                const days = worker && worker.days && typeof worker.days === 'object' ? worker.days : {};
+    
+                if (hasWorklogValue(days[prevDay])) {
+                    markDailyWorkerVisible(tIdx, wIdx, selectedWorklogDay);
+                    copiedCount++;
+                }
+            });
+        });
+    
+        if (copiedCount === 0) {
+            alert('전일 공수가 입력된 작업자가 없습니다.');
+            return;
+        }
+    
+        renderAllTeams();
     }
     
     function ensureWorklogModeControls() {
@@ -69,6 +133,12 @@
                     </select>
                     <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="changeDailyWorklogDay(1)" ${selectedWorklogDay >= lastDay ? 'disabled' : ''}>
                         다음일 <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-info fw-bold"
+                            onclick="copyPreviousDayWorkers()"
+                            ${selectedWorklogDay <= 1 ? 'disabled' : ''}>
+                        <i class="bi bi-arrow-down-square"></i> 전일 작업자 불러오기
                     </button>
                 </div>
             </div>
@@ -150,14 +220,20 @@
             delete teamData[tIdx].workers[wIdx].days[selectedWorklogDay];
         } else {
             teamData[tIdx].workers[wIdx].days[selectedWorklogDay] = cleanValue;
+            markDailyWorkerVisible(tIdx, wIdx, selectedWorklogDay);
         }
     
         updateDailyWorklogSummary();
     }
     
     function addWorkerFromDailyMode(tIdx) {
-        addWorker(tIdx);
+        if (!teamData[tIdx]) return;
+        if (!Array.isArray(teamData[tIdx].workers)) teamData[tIdx].workers = [];
+    
+        teamData[tIdx].workers.push({ name: "", days: {} });
+        markDailyWorkerVisible(tIdx, teamData[tIdx].workers.length - 1, selectedWorklogDay);
         worklogInputMode = 'daily';
+        renderAllTeams();
     }
     
     function renderDailyWorklogEditor(year, month) {
@@ -168,11 +244,15 @@
         const dayLabel = formatWorklogDayLabel(year, month, selectedWorklogDay);
     
         const teamSections = teamData.map((team, tIdx) => {
-            const workers = Array.isArray(team.workers) ? team.workers : [];
-            const teamTotal = summary.teamTotals[tIdx] ? summary.teamTotals[tIdx].total : 0;
-    
-        const workerRows = workers.length
-            ? `<div class="row g-2">` + workers.map((worker, wIdx) => {
+        const workers = Array.isArray(team.workers) ? team.workers : [];
+        const visibleWorkers = workers
+            .map((worker, wIdx) => ({ worker, wIdx }))
+            .filter(({ worker, wIdx }) => shouldShowDailyWorker(tIdx, wIdx, worker, selectedWorklogDay));
+        
+        const teamTotal = summary.teamTotals[tIdx] ? summary.teamTotals[tIdx].total : 0;
+        
+        const workerRows = visibleWorkers.length
+            ? `<div class="row g-2">` + visibleWorkers.map(({ worker, wIdx }) => {
                 const workerName = worker.name || '';
                 const days = worker.days && typeof worker.days === 'object' ? worker.days : {};
                 const value = days[selectedWorklogDay] || '';
@@ -207,7 +287,7 @@
                     </div>
                 `;
             }).join('') + `</div>`
-            : `<div class="text-secondary small py-3 text-center">등록된 작업자가 없습니다.</div>`;
+            : `<div class="text-secondary small py-3 text-center">표시할 작업자가 없습니다. 전일 작업자 불러오기를 누르거나 작업자를 추가해주세요.</div>`;
     
             return `
                 <div class="t5-card p-3 mb-3">
@@ -597,3 +677,4 @@ window.setDailyWorklogDay = setDailyWorklogDay;
 window.updateDailyWorkerValue = updateDailyWorkerValue;
 window.updateDailyWorklogSummary = updateDailyWorklogSummary;
 window.addWorkerFromDailyMode = addWorkerFromDailyMode;
+window.copyPreviousDayWorkers = copyPreviousDayWorkers;
