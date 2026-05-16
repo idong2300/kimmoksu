@@ -3,11 +3,238 @@
     let activeWorklogFilter = "mine";
     let cachedWorklogs = [];
     let isWorklogListEditMode = false;
+    let worklogInputMode = "monthly";
+    let selectedWorklogDay = new Date().getDate();
 
     function canCompleteWorklog() {
         return myRole === "owner" || myRole === "admin" || globalWorklogAdmins.includes(myEmail);
     }
+
+    function getSelectedWorklogMonthInfo() {
+        const logMonthEl = document.getElementById('logMonth');
+        const fallback = new Date().toISOString().substring(0, 7);
+        const raw = (logMonthEl && logMonthEl.value) ? logMonthEl.value : fallback;
+        const [year, month] = raw.split('-').map(Number);
+        const safeYear = Number.isFinite(year) ? year : new Date().getFullYear();
+        const safeMonth = Number.isFinite(month) ? month : new Date().getMonth() + 1;
+        const lastDay = new Date(safeYear, safeMonth, 0).getDate();
     
+        if (!Number.isFinite(selectedWorklogDay) || selectedWorklogDay < 1) selectedWorklogDay = 1;
+        if (selectedWorklogDay > lastDay) selectedWorklogDay = lastDay;
+    
+        return { year: safeYear, month: safeMonth, lastDay };
+    }
+    
+    function formatWorklogDayLabel(year, month, day) {
+        const weekNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const week = weekNames[new Date(year, month - 1, day).getDay()];
+        return `${year}년 ${month}월 ${day}일 (${week})`;
+    }
+    
+    function ensureWorklogModeControls() {
+        const container = document.getElementById('team-container');
+        if (!container) return;
+    
+        let controls = document.getElementById('worklog-mode-controls');
+        if (!controls) {
+            controls = document.createElement('div');
+            controls.id = 'worklog-mode-controls';
+            controls.className = 't5-card p-3 mb-3';
+            container.parentNode.insertBefore(controls, container);
+        }
+    
+        const { year, month, lastDay } = getSelectedWorklogMonthInfo();
+    
+        const dayOptions = Array.from({ length: lastDay }, (_, i) => {
+            const day = i + 1;
+            return `<option value="${day}" ${day === selectedWorklogDay ? 'selected' : ''}>${day}일</option>`;
+        }).join('');
+    
+        controls.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <div class="small text-secondary fw-bold mb-1">작업일보 수정 방식</div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm ${worklogInputMode === 'monthly' ? 'btn-primary' : 'btn-outline-secondary'} fw-bold" onclick="switchWorklogInputMode('monthly')">월별 수정</button>
+                        <button type="button" class="btn btn-sm ${worklogInputMode === 'daily' ? 'btn-primary' : 'btn-outline-secondary'} fw-bold" onclick="switchWorklogInputMode('daily')">일별 수정</button>
+                    </div>
+                </div>
+    
+                <div class="${worklogInputMode === 'daily' ? 'd-flex' : 'd-none'} align-items-center gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="changeDailyWorklogDay(-1)" ${selectedWorklogDay <= 1 ? 'disabled' : ''}>
+                        <i class="bi bi-chevron-left"></i> 전일
+                    </button>
+                    <select class="form-select form-select-sm input-dark fw-bold" style="width:auto; min-width:90px;" onchange="setDailyWorklogDay(this.value)">
+                        ${dayOptions}
+                    </select>
+                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="changeDailyWorklogDay(1)" ${selectedWorklogDay >= lastDay ? 'disabled' : ''}>
+                        다음일 <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+    
+            ${worklogInputMode === 'daily' ? `
+                <div class="small text-secondary mt-3">
+                    <i class="bi bi-info-circle me-1"></i>${formatWorklogDayLabel(year, month, selectedWorklogDay)} 기준으로 전 공정 작업자의 공수를 입력합니다.
+                </div>
+            ` : ''}
+        `;
+    }
+    
+    function switchWorklogInputMode(mode) {
+        worklogInputMode = mode === 'daily' ? 'daily' : 'monthly';
+        renderAllTeams();
+    }
+    
+    function changeDailyWorklogDay(diff) {
+        const { lastDay } = getSelectedWorklogMonthInfo();
+        selectedWorklogDay = Math.min(lastDay, Math.max(1, selectedWorklogDay + Number(diff || 0)));
+        renderAllTeams();
+    }
+    
+    function setDailyWorklogDay(dayValue) {
+        const { lastDay } = getSelectedWorklogMonthInfo();
+        const nextDay = parseInt(dayValue, 10);
+        if (!Number.isFinite(nextDay)) return;
+    
+        selectedWorklogDay = Math.min(lastDay, Math.max(1, nextDay));
+        renderAllTeams();
+    }
+    
+    function getDailyWorklogSummary(day) {
+        let total = 0;
+        const teamTotals = [];
+    
+        teamData.forEach(team => {
+            let teamTotal = 0;
+            const workers = Array.isArray(team.workers) ? team.workers : [];
+    
+            workers.forEach(worker => {
+                const days = worker && worker.days ? worker.days : {};
+                const value = parseFloat(days[day] || 0) || 0;
+                teamTotal += value;
+                total += value;
+            });
+    
+            teamTotals.push({ teamName: team.teamName, total: teamTotal });
+        });
+    
+        return { total, teamTotals };
+    }
+    
+    function updateDailyWorklogSummary() {
+        const summary = getDailyWorklogSummary(selectedWorklogDay);
+        const totalEl = document.getElementById('dailyWorklogTotal');
+        const detailEl = document.getElementById('dailyWorklogTeamTotals');
+    
+        if (totalEl) totalEl.innerText = `${summary.total} 공수`;
+    
+        if (detailEl) {
+            const visibleTotals = summary.teamTotals.filter(t => t.total > 0);
+            detailEl.innerHTML = visibleTotals.length
+                ? visibleTotals.map(t => `<span class="badge bg-dark text-white border border-secondary border-opacity-25 me-1 mb-1">${t.teamName} ${t.total}</span>`).join('')
+                : '<span class="text-secondary small">입력된 공수가 없습니다.</span>';
+        }
+    }
+    
+    function updateDailyWorkerValue(tIdx, wIdx, value) {
+        if (!teamData[tIdx] || !teamData[tIdx].workers || !teamData[tIdx].workers[wIdx]) return;
+    
+        if (!teamData[tIdx].workers[wIdx].days || typeof teamData[tIdx].workers[wIdx].days !== 'object') {
+            teamData[tIdx].workers[wIdx].days = {};
+        }
+    
+        const cleanValue = String(value || '').trim();
+    
+        if (cleanValue === '') {
+            delete teamData[tIdx].workers[wIdx].days[selectedWorklogDay];
+        } else {
+            teamData[tIdx].workers[wIdx].days[selectedWorklogDay] = cleanValue;
+        }
+    
+        updateDailyWorklogSummary();
+    }
+    
+    function addWorkerFromDailyMode(tIdx) {
+        addWorker(tIdx);
+        worklogInputMode = 'daily';
+    }
+    
+    function renderDailyWorklogEditor(year, month) {
+        const container = document.getElementById('team-container');
+        if (!container) return;
+    
+        const summary = getDailyWorklogSummary(selectedWorklogDay);
+        const dayLabel = formatWorklogDayLabel(year, month, selectedWorklogDay);
+    
+        const teamSections = teamData.map((team, tIdx) => {
+            const workers = Array.isArray(team.workers) ? team.workers : [];
+            const teamTotal = summary.teamTotals[tIdx] ? summary.teamTotals[tIdx].total : 0;
+    
+            const workerRows = workers.length
+                ? workers.map((worker, wIdx) => {
+                    const workerName = worker.name || '';
+                    const days = worker.days && typeof worker.days === 'object' ? worker.days : {};
+                    const value = days[selectedWorklogDay] || '';
+    
+                    return `
+                        <div class="d-flex align-items-center gap-2 py-2 border-bottom border-secondary border-opacity-10">
+                            <div class="flex-grow-1" style="min-width:0;">
+                                <input type="text" class="form-control input-dark fw-bold" value="${workerName}" placeholder="작업자 이름" onchange="teamData[${tIdx}].workers[${wIdx}].name=this.value">
+                            </div>
+                            <div style="width:110px;">
+                                <input type="number" step="0.5" min="0" class="form-control input-dark text-center fw-bold" value="${value}" placeholder="공수" oninput="updateDailyWorkerValue(${tIdx}, ${wIdx}, this.value)">
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" onclick="removeWorker(${tIdx}, ${wIdx}); worklogInputMode='daily'; renderAllTeams();">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('')
+                : `<div class="text-secondary small py-3 text-center">등록된 작업자가 없습니다.</div>`;
+    
+            return `
+                <div class="t5-card p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                        <div>
+                            <h6 class="fw-bold m-0">${team.teamName}</h6>
+                            <div class="small text-secondary">${dayLabel}</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary px-3 py-2">${teamTotal} 공수</span>
+                            <button type="button" class="t5-btn-small fw-bold" onclick="addWorkerFromDailyMode(${tIdx})">+ 작업자</button>
+                        </div>
+                    </div>
+                    ${workerRows}
+                </div>
+            `;
+        }).join('');
+    
+        const teamTotalBadges = summary.teamTotals
+            .filter(t => t.total > 0)
+            .map(t => `<span class="badge bg-dark text-white border border-secondary border-opacity-25 me-1 mb-1">${t.teamName} ${t.total}</span>`)
+            .join('');
+    
+        container.innerHTML = `
+            <div class="t5-card border border-primary border-opacity-25 bg-primary bg-opacity-10">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <div class="small text-secondary fw-bold">일별 총 공수</div>
+                        <h4 class="fw-bold text-white m-0">${dayLabel}</h4>
+                    </div>
+                    <div class="text-end">
+                        <div id="dailyWorklogTotal" class="fw-bold text-warning fs-3">${summary.total} 공수</div>
+                        <div id="dailyWorklogTeamTotals" class="mt-1">
+                            ${teamTotalBadges || '<span class="text-secondary small">입력된 공수가 없습니다.</span>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            ${teamSections}
+        `;
+    }
+
     function switchWorklogFilter(filter, btn) {
         activeWorklogFilter = filter;
     
@@ -43,9 +270,18 @@
     }
     
     function renderAllTeams() {
-        const container = document.getElementById('team-container'); 
-        const [year, month] = (document.getElementById('logMonth').value||"2026-04").split('-').map(Number); 
-        const lastDay = new Date(year, month, 0).getDate();
+        const container = document.getElementById('team-container');
+        if (!container) return;
+    
+        ensureWorklogModeControls();
+    
+        const { year, month, lastDay } = getSelectedWorklogMonthInfo();
+    
+        if (worklogInputMode === 'daily') {
+            renderDailyWorklogEditor(year, month);
+            return;
+        }
+    
         
         container.innerHTML = teamData.map((team, tIdx) => {
             let teamTotal = 0; 
@@ -269,8 +505,8 @@
     }
 
 
-    async function editLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = d.teamData || []; showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); window.scrollTo(0,0); }
-    async function copyLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = d.teamData || []; showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); alert("데이터가 복사되었습니다."); window.scrollTo(0,0); }
+    async function editLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = id; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site; teamData = normalizeTeamData(d.teamData || []); showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); window.scrollTo(0,0); }
+    async function copyLog(id) { const d = (await db.collection("monthly_logs").doc(id).get()).data(); editingId = null; document.getElementById('logMonth').value = d.month; document.getElementById('siteName').value = d.site + " (복사)"; teamData = normalizeTeamData(d.teamData || []); showPage('worklog', null, true, { preserveState: true }); renderAllTeams(); alert("데이터가 복사되었습니다."); window.scrollTo(0,0); }
     async function deleteLog(id) { if(confirm("이 작업일보를 완전히 삭제하시겠습니까?")) { await db.collection("monthly_logs").doc(id).delete(); } }
 
     async function completeWorklog(id) {
@@ -339,3 +575,9 @@ window.toggleWorklogListEditMode = toggleWorklogListEditMode;
 window.renderWorklogHistory = renderWorklogHistory;
 window.completeWorklog = completeWorklog;
 window.reopenWorklog = reopenWorklog;
+window.switchWorklogInputMode = switchWorklogInputMode;
+window.changeDailyWorklogDay = changeDailyWorklogDay;
+window.setDailyWorklogDay = setDailyWorklogDay;
+window.updateDailyWorkerValue = updateDailyWorkerValue;
+window.updateDailyWorklogSummary = updateDailyWorklogSummary;
+window.addWorkerFromDailyMode = addWorkerFromDailyMode;
