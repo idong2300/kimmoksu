@@ -7,6 +7,14 @@
     let teamMembersInfo = {};
     let globalLeaveRecords = [];
 
+function canManageLeave() {
+    const leaveAdmins = (typeof globalLeaveAdmins !== 'undefined' && Array.isArray(globalLeaveAdmins))
+        ? globalLeaveAdmins
+        : [];
+
+    return myRole === "owner" || myRole === "admin" || leaveAdmins.includes(myEmail);
+}
+
 function initLeaveCalendarSelects() {
     const yearEl = document.getElementById('calYear');
     const monthEl = document.getElementById('calMonth');
@@ -312,7 +320,7 @@ if (window.LEAVE_STANDALONE) {
             return;
         }
 
-        if(myRole === "owner" || myRole === "admin") {
+        if(canManageLeave()) {
             if(adminPanel) adminPanel.style.display = 'block';
 
             if(adminBody) {
@@ -547,10 +555,10 @@ if (window.LEAVE_STANDALONE) {
             let nick = globalEmailToNick[r.userEmail] || r.userEmail.split('@')[0];
             let typeStr = r.amount === 1 ? '종일 연차' : (r.type === 'am' ? '오전 반차' : '오후 반차');
             let reasonStr = r.reason ? `<br><span class="small text-secondary"><i class="bi bi-chat-quote"></i> ${r.reason}</span>` : '';
-            let isOwnerOrAdmin = (myRole === 'owner' || myRole === 'admin');
-            let canDelete = r.approved ? isOwnerOrAdmin : (isOwnerOrAdmin || r.userEmail === myEmail);
+            let canManage = canManageLeave();
+            let canDelete = r.approved ? canManage : (canManage || r.userEmail === myEmail);
             let rowClass = r.approved ? 'approved-row' : '';
-            let canPrint = r.approved && (isOwnerOrAdmin || r.userEmail === myEmail);
+            let canPrint = r.approved && (canManage || r.userEmail === myEmail);
             let printBtn = canPrint ? `<button class="btn btn-outline-primary px-3 py-1 fw-bold" onclick="printLeaveForm('${r.id}')"><i class="bi bi-printer me-1"></i>출력</button>` : '';
             
 
@@ -561,7 +569,7 @@ if (window.LEAVE_STANDALONE) {
                         </div>
                         <div class="d-flex align-items-center gap-3">
                             <label class="m-0 d-flex align-items-center gap-2 cursor-pointer">
-                                <input type="checkbox" class="form-check-input m-0" style="width:20px; height:20px;" ${r.approved?'checked':''} ${isOwnerOrAdmin?'':'disabled'} onchange="toggleLeaveApprove('${r.id}', ${r.approved||false})">
+                                <input type="checkbox" class="form-check-input m-0" style="width:20px; height:20px;" ${r.approved?'checked':''} ${canManage?'':'disabled'} onchange="toggleLeaveApprove('${r.id}', ${r.approved||false})">
                                 ${r.approved ? '<span class="text-success fw-bold">승인 완료</span>' : '<span class="text-warning fw-bold">결재 대기</span>'}
                             </label>
                             ${printBtn}
@@ -582,16 +590,16 @@ if (window.LEAVE_STANDALONE) {
         let listHtml = matchRecs.map(r => {
             let txt = r.amount === 1 ? '종일 연차' : (r.type === 'am' ? '오전 반차' : '오후 반차');
             let nick = globalEmailToNick[r.userEmail] || r.userEmail.split('@')[0];
-            let isOwnerOrAdmin = (myRole === 'owner' || myRole === 'admin');
-            let canDelete = r.approved ? isOwnerOrAdmin : (isOwnerOrAdmin || r.userEmail === myEmail);
+            let canManage = canManageLeave();
+            let canDelete = r.approved ? canManage : (canManage || r.userEmail === myEmail);
             let rowClass = r.approved ? 'approved-row' : '';
-            let canPrint = r.approved && (isOwnerOrAdmin || r.userEmail === myEmail);
+            let canPrint = r.approved && (canManage || r.userEmail === myEmail);
             let printBtn = canPrint ? `<button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="printLeaveForm('${r.id}')"><i class="bi bi-printer"></i></button>` : '';
             return `<div class="leave-detail-item ${rowClass}">
                         <div class="fw-bold text-white">${nick} <span class="badge bg-secondary ms-2">${txt}</span> ${r.reason ? `<span class="small text-secondary ms-2">(${r.reason})</span>` : ''}</div>
                         <div class="d-flex align-items-center gap-3">
                             <label class="m-0 d-flex align-items-center gap-1 small cursor-pointer">
-                                <input type="checkbox" class="form-check-input m-0" ${r.approved?'checked':''} ${isOwnerOrAdmin?'':'disabled'} onchange="toggleLeaveApprove('${r.id}', ${r.approved||false})">
+                                <input type="checkbox" class="form-check-input m-0" ${r.approved?'checked':''} ${canManage?'':'disabled'} onchange="toggleLeaveApprove('${r.id}', ${r.approved||false})">
                                 ${r.approved ? '<span class="text-success fw-bold">승인 완료</span>' : '<span class="text-warning">대기중</span>'}
                             </label>
                             ${printBtn}
@@ -608,8 +616,8 @@ if (window.LEAVE_STANDALONE) {
     }
 
     async function toggleLeaveApprove(id, current) {
-        if (myRole !== 'owner' && myRole !== 'admin') {
-            return alert("관리자만 승인할 수 있습니다.");
+        if (!canManageLeave()) {
+            return alert("연차관리 권한이 없습니다.");
         }
     
         const nextApproved = !current;
@@ -630,9 +638,9 @@ if (window.LEAVE_STANDALONE) {
     }
     
     async function deleteLeaveRecord(id, email, approved) {
-        let isOwnerOrAdmin = (myRole === 'owner' || myRole === 'admin');
-        if (approved && !isOwnerOrAdmin) return alert("이미 승인된 연차는 관리자만 삭제(취소) 가능합니다.");
-        if (!approved && !isOwnerOrAdmin && email !== myEmail) return alert("본인의 신청 내역만 삭제할 수 있습니다.");
+        let canManage = canManageLeave();
+        if (approved && !canManage) return alert("이미 승인된 연차는 연차관리 담당자만 삭제(취소) 가능합니다.");
+        if (!approved && !canManage && email !== myEmail) return alert("본인의 신청 내역만 삭제할 수 있습니다.");
         if (confirm("정말 이 휴가 신청을 취소/삭제하시겠습니까?")) { 
             await db.collection("leave_records").doc(id).delete(); 
             document.getElementById('calAccordionArea').style.display = 'none'; 
@@ -904,6 +912,11 @@ if (window.LEAVE_STANDALONE) {
             return;
         }
 
+        if(!canManageLeave()) {
+            alert("연차관리 권한이 없습니다.");
+            return;
+        }
+
         const saveBtn = document.querySelector('button[onclick="saveLeaveSettings()"]');
         const originalText = saveBtn ? saveBtn.innerHTML : '';
 
@@ -957,3 +970,4 @@ window.saveLeaveSettings = saveLeaveSettings;
 window.recalcLeavePreview = recalcLeavePreview;
 window.calculateAnnualLeave = calculateAnnualLeave;
 window.printLeaveForm = printLeaveForm;
+window.canManageLeave = canManageLeave;
