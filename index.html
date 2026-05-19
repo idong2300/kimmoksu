@@ -748,13 +748,19 @@
                 <div class="collapse mt-4" id="leaveAdminCollapse">
                     <p class="small text-secondary mb-3">
                         <i class="bi bi-info-circle me-1"></i>
-                        <b>회계연도(매년 1월 1일) 기준</b>으로 자동 계산됩니다. 입사일만 정확히 입력해 주세요.<br>
+                        <b>회계연도(매년 1월 1일) 기준</b>으로 자동 계산됩니다. 입사일과 출력용 정보를 정확히 입력해 주세요.<br>
                         <span class="text-warning small">· 1년차 미만: 매월 개근 1일씩 (최대 11일) · 2년차: 전년 근무일 비례 · 3년차+: 15일 + 근속 가산 (최대 25일)</span>
                     </p>
                     <div class="table-responsive">
                         <table class="table table-dark align-middle text-center mb-0">
                             <thead class="text-secondary">
-                                <tr><th>팀원 이름</th><th>입사일</th><th>기본 (자동)</th><th>가산 (자동)</th><th>총 부여</th></tr>
+                                <tr>
+                                    <th>팀원 이름 / 정보</th>
+                                    <th>입사일</th>
+                                    <th>기본 (자동)</th>
+                                    <th>가산 (자동)</th>
+                                    <th>총 부여</th>
+                                </tr>
                             </thead>
                             <tbody id="leaveAdminBody"></tbody>
                         </table>
@@ -1083,6 +1089,43 @@
         </div>
     </div>
 </div>    
+
+<!-- 연차 직원 상세정보 편집 모달 -->
+<div class="modal-backdrop-custom" id="leaveMemberEditModal">
+    <div class="modal-box">
+        <h5 class="fw-bold mb-4 text-white">
+            <i class="bi bi-person-vcard me-2 text-info"></i>
+            연차 출력 정보 편집
+        </h5>
+
+        <input type="hidden" id="leaveEditEmail">
+
+        <div class="mb-3">
+            <label class="small text-secondary mb-1">직원 이름</label>
+            <input type="text" id="leaveEditName" class="form-control input-dark fw-bold" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="small text-secondary mb-1">부서</label>
+            <input type="text" id="leaveEditDepartment" class="form-control input-dark" placeholder="예: 시공팀, 관리팀">
+        </div>
+
+        <div class="mb-3">
+            <label class="small text-secondary mb-1">직급</label>
+            <input type="text" id="leaveEditPosition" class="form-control input-dark" placeholder="예: 팀장, 과장, 사원">
+        </div>
+
+        <div class="mb-4">
+            <label class="small text-secondary mb-1">담당업무</label>
+            <input type="text" id="leaveEditDuty" class="form-control input-dark" placeholder="예: 현장관리, 목공, 필름, 전기">
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary w-50 py-2 fw-bold" onclick="closeLeaveMemberEditModal()">취소</button>
+            <button class="btn btn-primary w-50 py-2 fw-bold" onclick="saveLeaveMemberInfo()">저장하기</button>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="permModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
