@@ -925,7 +925,64 @@ if (window.LEAVE_STANDALONE) {
 
     // 💡 V1.4.1: 저장은 입사일만 (기본/가산은 매 로드 시 자동 계산) 💡
     async function saveLeaveSettings() {
-        ...
+        if (!myTeamId) {
+            alert("팀 정보를 먼저 불러온 뒤 저장할 수 있습니다.");
+            return;
+        }
+    
+        if (!canManageLeave()) {
+            alert("연차관리 권한이 없습니다.");
+            return;
+        }
+    
+        const saveBtn = document.querySelector('button[onclick="saveLeaveSettings()"]');
+        const originalText = saveBtn ? saveBtn.innerHTML : "";
+    
+        try {
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>저장 중';
+            }
+    
+            const tDoc = await db.collection("teams").doc(myTeamId).get();
+            const teamData = tDoc.exists ? tDoc.data() : {};
+            const existingInfo =
+                teamData && teamData.membersInfo && typeof teamData.membersInfo === "object"
+                    ? { ...teamData.membersInfo }
+                    : {};
+    
+            document.querySelectorAll(".leave-join").forEach(el => {
+                const email = String(el.getAttribute("data-email") || "").trim();
+                if (!email) return;
+    
+                if (!existingInfo[email] || typeof existingInfo[email] !== "object") {
+                    existingInfo[email] = {};
+                }
+    
+                existingInfo[email].joinDate = el.value || "";
+            });
+    
+            await db.collection("teams").doc(myTeamId).update({
+                membersInfo: existingInfo
+            });
+    
+            teamMembersInfo = existingInfo;
+    
+            alert("입사일이 저장되었습니다.\n자동 계산된 연차가 화면에 반영됩니다.");
+    
+            const refreshedDoc = await db.collection("teams").doc(myTeamId).get();
+            if (refreshedDoc.exists) {
+                loadTeamMembersLeave(refreshedDoc.data());
+            }
+        } catch (error) {
+            console.error("연차 설정 저장 오류:", error);
+            alert("연차 정보를 저장하는 중 오류가 발생했습니다.\n" + (error.message || error));
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText || "입사일 저장";
+            }
+        }
     }
 
     function openLeaveMemberEditModal(email) {
