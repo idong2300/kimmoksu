@@ -337,8 +337,26 @@ if (window.LEAVE_STANDALONE) {
                         const joinDateValue = formatDateForInput(joinDateRaw);
                         const calc = calculateAnnualLeave(joinDateRaw, targetYear);
 
+                        const department = info.department || '';
+                        const position = info.position || '';
+                        const duty = info.duty || info.task || info.job || info.work || '';
+                        
+                        const infoPreview = [department, position, duty].filter(Boolean).join(' / ');
+                        
                         adminRows.push(`<tr data-email="${escapeLeaveHtml(email)}">
-                            <td class="fw-bold">${escapeLeaveHtml(nick)}</td>
+                            <td class="fw-bold">
+                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                    <div class="text-start" style="min-width:0;">
+                                        <div class="fw-bold text-truncate">${escapeLeaveHtml(nick)}</div>
+                                        ${infoPreview ? `<div class="small text-secondary text-truncate">${escapeLeaveHtml(infoPreview)}</div>` : `<div class="small text-secondary">출력 정보 미입력</div>`}
+                                    </div>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-info text-nowrap"
+                                            onclick="openLeaveMemberEditModal('${escapeLeaveJs(email)}')">
+                                        편집
+                                    </button>
+                                </div>
+                            </td>
                             <td>
                                 <input type="date" class="form-control input-dark leave-join" data-email="${escapeLeaveHtml(email)}"
                                        value="${escapeLeaveHtml(joinDateValue)}"
@@ -825,7 +843,7 @@ if (window.LEAVE_STANDALONE) {
             const applicantName = globalEmailToNick[email] || email.split("@")[0] || "";
             const department = info.department || info.dept || "";
             const position = info.position || info.rank || "";
-            const duty = info.task || info.job || info.work || "";
+            const duty = info.duty || info.task || info.job || info.work || "";
             const substitute = record.substitute || info.substitute || "";
             const emergencyPhone = record.emergencyPhone || info.phone || info.contact || "";
             const reason = record.reason || "";
@@ -907,55 +925,116 @@ if (window.LEAVE_STANDALONE) {
 
     // 💡 V1.4.1: 저장은 입사일만 (기본/가산은 매 로드 시 자동 계산) 💡
     async function saveLeaveSettings() {
-        if(!myTeamId) {
-            alert("팀 정보를 먼저 불러온 뒤 저장할 수 있습니다.");
+        ...
+    }
+
+    function openLeaveMemberEditModal(email) {
+        const safeEmail = String(email || '').trim();
+        if (!safeEmail) return;
+
+        const info = teamMembersInfo[safeEmail] && typeof teamMembersInfo[safeEmail] === 'object'
+            ? teamMembersInfo[safeEmail]
+            : {};
+
+        const nick = globalEmailToNick[safeEmail] || safeEmail.split('@')[0] || '';
+
+        const emailEl = document.getElementById('leaveEditEmail');
+        const nameEl = document.getElementById('leaveEditName');
+        const departmentEl = document.getElementById('leaveEditDepartment');
+        const positionEl = document.getElementById('leaveEditPosition');
+        const dutyEl = document.getElementById('leaveEditDuty');
+        const modalEl = document.getElementById('leaveMemberEditModal');
+
+        if (!emailEl || !nameEl || !departmentEl || !positionEl || !dutyEl || !modalEl) {
+            alert('연차 직원 정보 편집 모달을 찾을 수 없습니다.');
             return;
         }
 
-        if(!canManageLeave()) {
-            alert("연차관리 권한이 없습니다.");
+        emailEl.value = safeEmail;
+        nameEl.value = nick;
+        departmentEl.value = info.department || info.dept || '';
+        positionEl.value = info.position || info.rank || '';
+        dutyEl.value = info.duty || info.task || info.job || info.work || '';
+
+        modalEl.style.display = 'flex';
+    }
+
+    function closeLeaveMemberEditModal() {
+        const modalEl = document.getElementById('leaveMemberEditModal');
+        if (modalEl) modalEl.style.display = 'none';
+
+        const emailEl = document.getElementById('leaveEditEmail');
+        const nameEl = document.getElementById('leaveEditName');
+        const departmentEl = document.getElementById('leaveEditDepartment');
+        const positionEl = document.getElementById('leaveEditPosition');
+        const dutyEl = document.getElementById('leaveEditDuty');
+
+        if (emailEl) emailEl.value = '';
+        if (nameEl) nameEl.value = '';
+        if (departmentEl) departmentEl.value = '';
+        if (positionEl) positionEl.value = '';
+        if (dutyEl) dutyEl.value = '';
+    }
+
+    async function saveLeaveMemberInfo() {
+        if (!myTeamId) {
+            alert('팀 정보를 먼저 불러온 뒤 저장할 수 있습니다.');
             return;
         }
 
-        const saveBtn = document.querySelector('button[onclick="saveLeaveSettings()"]');
-        const originalText = saveBtn ? saveBtn.innerHTML : '';
+        if (!canManageLeave()) {
+            alert('연차관리 권한이 없습니다.');
+            return;
+        }
+
+        const email = String(document.getElementById('leaveEditEmail')?.value || '').trim();
+        if (!email) {
+            alert('저장할 직원을 찾을 수 없습니다.');
+            return;
+        }
+
+        const department = document.getElementById('leaveEditDepartment')?.value.trim() || '';
+        const position = document.getElementById('leaveEditPosition')?.value.trim() || '';
+        const duty = document.getElementById('leaveEditDuty')?.value.trim() || '';
 
         try {
-            if(saveBtn) {
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>저장 중';
+            const tDoc = await db.collection("teams").doc(myTeamId).get();
+            const tData = tDoc.exists ? tDoc.data() : {};
+            const existingInfo = (tData.membersInfo && typeof tData.membersInfo === 'object')
+                ? { ...tData.membersInfo }
+                : {};
+
+            if (!existingInfo[email] || typeof existingInfo[email] !== 'object') {
+                existingInfo[email] = {};
             }
 
-            const tDoc = await db.collection("teams").doc(myTeamId).get();
-            const teamData = tDoc.exists ? tDoc.data() : {};
-            const existingInfo = (teamData && teamData.membersInfo && typeof teamData.membersInfo === 'object') ? { ...teamData.membersInfo } : {};
+            existingInfo[email] = {
+                ...existingInfo[email],
+                department,
+                position,
+                duty
+            };
 
-            document.querySelectorAll('.leave-join').forEach(el => {
-                const email = String(el.getAttribute('data-email') || '').trim();
-                if(!email) return;
-                if(!existingInfo[email] || typeof existingInfo[email] !== 'object') existingInfo[email] = {};
-                existingInfo[email].joinDate = el.value || '';
+            await db.collection("teams").doc(myTeamId).update({
+                membersInfo: existingInfo
             });
 
-            await db.collection("teams").doc(myTeamId).update({ membersInfo: existingInfo });
             teamMembersInfo = existingInfo;
 
-            alert("입사일이 저장되었습니다.\n자동 계산된 연차가 화면에 반영됩니다.");
+            closeLeaveMemberEditModal();
+
+            alert('직원 출력 정보가 저장되었습니다.');
 
             const refreshedDoc = await db.collection("teams").doc(myTeamId).get();
-            if(refreshedDoc.exists) {
+            if (refreshedDoc.exists) {
                 loadTeamMembersLeave(refreshedDoc.data());
             }
-        } catch(error) {
-            console.error('연차 설정 저장 오류:', error);
-            alert("연차 정보를 저장하는 중 오류가 발생했습니다.\n" + (error.message || error));
-        } finally {
-            if(saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalText || '입사일 저장';
-            }
+        } catch (error) {
+            console.error('연차 직원 정보 저장 오류:', error);
+            alert('직원 정보를 저장하는 중 오류가 발생했습니다.\n' + (error.message || error));
         }
     }
+
 window.initLeaveCalendarSelects = initLeaveCalendarSelects;
 window.loadLeaveData = loadLeaveData;
 window.loadTeamMembersLeave = loadTeamMembersLeave;
@@ -971,3 +1050,6 @@ window.recalcLeavePreview = recalcLeavePreview;
 window.calculateAnnualLeave = calculateAnnualLeave;
 window.printLeaveForm = printLeaveForm;
 window.canManageLeave = canManageLeave;
+window.openLeaveMemberEditModal = openLeaveMemberEditModal;
+window.closeLeaveMemberEditModal = closeLeaveMemberEditModal;
+window.saveLeaveMemberInfo = saveLeaveMemberInfo;
