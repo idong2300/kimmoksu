@@ -741,9 +741,21 @@
             </div>
             
             <div class="t5-card border border-warning border-opacity-50" id="leaveAdminPanel" style="display:none;">
-                <div class="d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#leaveAdminCollapse">
-                    <h5 class="fw-bold text-warning m-0"><i class="bi bi-gear me-2"></i>[관리자용] 연차 정보 관리</h5>
-                    <i class="bi bi-chevron-down text-warning fs-5"></i>
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <div class="d-flex align-items-center cursor-pointer flex-grow-1"
+                         data-bs-toggle="collapse"
+                         data-bs-target="#leaveAdminCollapse">
+                        <h5 class="fw-bold text-warning m-0">
+                            <i class="bi bi-gear me-2"></i>[관리자용] 연차 정보 관리
+                        </h5>
+                        <i class="bi bi-chevron-down text-warning fs-5 ms-auto"></i>
+                    </div>
+                
+                    <button type="button"
+                            class="btn btn-sm btn-outline-success fw-bold text-nowrap"
+                            onclick="openManualLeaveModal()">
+                        <i class="bi bi-plus-circle me-1"></i>과거 연차 등록
+                    </button>
                 </div>
                 <div class="collapse mt-4" id="leaveAdminCollapse">
                     <p class="small text-secondary mb-3">
@@ -1126,7 +1138,49 @@
         </div>
     </div>
 </div>    
+<!-- 과거 연차 수동 등록 모달 -->
+<div class="modal-backdrop-custom" id="manualLeaveModal">
+    <div class="modal-box">
+        <h5 class="fw-bold mb-4 text-white">
+            <i class="bi bi-calendar-plus me-2 text-success"></i>
+            과거 연차 사용 기록 등록
+        </h5>
 
+        <div class="mb-3">
+            <label class="small text-secondary mb-1">직원 선택</label>
+            <select id="manualLeaveUser" class="form-select input-dark fw-bold"></select>
+        </div>
+
+        <div class="mb-3">
+            <label class="small text-secondary mb-1">사용 날짜</label>
+            <input type="date" id="manualLeaveDate" class="form-control input-dark">
+        </div>
+
+        <div class="mb-3">
+            <label class="small text-secondary mb-1">연차 종류</label>
+            <select id="manualLeaveType" class="form-select input-dark fw-bold">
+                <option value="1">종일 연차 (1일)</option>
+                <option value="0.5_am">오전 반차 (0.5일)</option>
+                <option value="0.5_pm">오후 반차 (0.5일)</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="small text-secondary mb-1">비고 / 사유</label>
+            <input type="text" id="manualLeaveReason" class="form-control input-dark" placeholder="예: 과거 사용분 등록, 병원 방문 등">
+        </div>
+
+        <div class="small text-secondary mb-4">
+            <i class="bi bi-info-circle me-1"></i>
+            담당자가 등록하는 과거 기록은 승인 완료 상태로 저장되며, 남은 연차 계산에 바로 반영됩니다.
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary w-50 py-2 fw-bold" onclick="closeManualLeaveModal()">취소</button>
+            <button class="btn btn-success w-50 py-2 fw-bold" onclick="saveManualLeaveRecord()">등록하기</button>
+        </div>
+    </div>
+</div>
 <!-- 연차 직원 상세정보 편집 모달 -->
 <div class="modal-backdrop-custom" id="leaveMemberEditModal">
     <div class="modal-box">
