@@ -383,15 +383,25 @@
         let list = cachedGanttLogs;
     
         if (activeGanttFilter === "mine") {
-            list = cachedGanttLogs.filter(log =>
-                !log.isCompleted &&
-                (
-                    log.writerEmail === myEmail ||
-                    log.lastModifierEmail === myEmail ||
-                    log.originalWriter === userNickname ||
-                    (!log.writerEmail && !log.originalWriter)
-                )
-            );
+            list = cachedGanttLogs.filter(log => {
+                if (log.isCompleted) return false;
+        
+                const writerEmail = String(log.writerEmail || "").trim();
+                const writerName = String(log.writerName || log.originalWriter || "").trim();
+        
+                // 작성자 이메일이 있으면 이메일 기준으로만 내 파일 판단
+                if (writerEmail) {
+                    return writerEmail === myEmail;
+                }
+        
+                // 작성자 이메일이 없고 이름만 있으면 이름 기준으로 내 파일 판단
+                if (writerName) {
+                    return writerName === userNickname;
+                }
+        
+                // 작성자 정보가 없는 구버전 파일만 임시로 내 파일에 표시
+                return true;
+            });
         } else if (activeGanttFilter === "all") {
             list = cachedGanttLogs.filter(log => !log.isCompleted);
         } else if (activeGanttFilter === "done") {
