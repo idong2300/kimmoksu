@@ -615,27 +615,28 @@
                     <div class="col-md-5">
                         <input type="text" id="ganttSiteName" class="form-control input-dark fs-5 fw-bold text-warning" placeholder="현장명을 입력하세요">
                     </div>
-                    <<div class="col-md-7 d-flex justify-content-end gap-1 flex-wrap">
+                
+                    <div class="col-md-7 d-flex justify-content-end gap-1 flex-wrap">
                         <button class="btn btn-sm btn-primary px-2 fw-bold text-nowrap"
                                 id="btnGanttPlanMode"
                                 onclick="setGanttEditMode('plan')">
                             예정
                         </button>
-                    
+                
                         <button class="btn btn-sm btn-outline-warning px-2 fw-bold text-nowrap"
                                 id="btnGanttProgressMode"
                                 onclick="setGanttEditMode('progress')">
                             진행
                         </button>
-                    
+                
                         <button class="btn btn-sm btn-info px-2 fw-bold text-white text-nowrap" onclick="captureGantt()">
                             <i class="bi bi-camera"></i> <span class="d-none d-sm-inline">캡처/공유</span>
                         </button>
-                    
+                
                         <button class="btn btn-sm btn-success px-2 fw-bold text-nowrap" onclick="saveGantt()">
                             💾 <span class="d-none d-sm-inline">현재 상태 저장</span>
                         </button>
-                    
+                
                         <button class="btn btn-sm btn-outline-danger px-2 text-nowrap"
                                 id="btnDeleteGantt"
                                 onclick="deleteGantt()"
@@ -643,6 +644,7 @@
                             삭제
                         </button>
                     </div>
+                </div>
                 
                 <div class="d-flex justify-content-between align-items-center cursor-pointer mb-2 p-2 border border-primary border-opacity-25 rounded bg-primary bg-opacity-10" data-bs-toggle="collapse" data-bs-target="#ganttCollapseArea">
                     <h6 class="fw-bold m-0 text-primary"><i class="bi bi-bar-chart-steps me-2"></i>공정표 (여기를 눌러 접기/펴기)</h6>
