@@ -603,6 +603,8 @@
             setGanttEditMode("plan");
         }
     }
+    
+    async function tempEditGanttWriter(id) {
         if (!(myRole === "owner" || myRole === "admin")) {
             alert("작성자 수정 권한이 없습니다.");
             return;
@@ -636,9 +638,8 @@
             writerName: cleanName,
             originalWriter: cleanName,
             writerEmail: cleanEmail,
-            updatedAt: Date.now(),
-            lastModifier: userNickname,
-            lastModifierEmail: myEmail
+            writerFixedAt: Date.now(),
+            writerFixedBy: myEmail
         });
     
         alert("작성자 정보가 수정되었습니다.");
