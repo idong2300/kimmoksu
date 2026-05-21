@@ -1,6 +1,10 @@
     // 공정표 (Gantt)
     let ganttTasks = ["철거", "목공", "전기", "필름", "도장", "소방", "가구", "바닥", "유리", "금속", "사인", "설비", "청소", "기타 잔손"];
-    let ganttDates = []; let ganttState = {}; let currentGanttId = null;
+    let ganttDates = [];
+    let ganttState = {};
+    let ganttProgressState = {};
+    let currentGanttId = null;
+    let ganttEditMode = "plan";
     let activeGanttFilter = "mine";
     let cachedGanttLogs = [];
     // 💡 V35: 공정표 메모 기능 전역 변수 💡
@@ -16,7 +20,14 @@
         let name = document.getElementById('newGanttName').value.trim(); let dVal = document.getElementById('newGanttDate').value.trim();
         if(!name || dVal.length !== 8) return alert("현장명과 착공일(8자리)을 입력하세요.");
         let start = new Date(dVal.substring(0,4), parseInt(dVal.substring(4,6))-1, dVal.substring(6,8));
-        ganttDates = []; ganttState = {}; ganttMemos = {}; currentGanttId = null; document.getElementById('ganttSiteName').value = name;
+        ganttDates = [];
+        ganttState = {};
+        ganttProgressState = {};
+        ganttMemos = {};
+        currentGanttId = null;
+        ganttEditMode = "plan";
+        document.getElementById('ganttSiteName').value = name;
+        setGanttEditMode("plan");
         for(let i=0; i<45; i++) { let dt = new Date(start); dt.setDate(start.getDate()+i); ganttDates.push(dt); }
         document.getElementById('ganttDashboard').style.display = 'block'; document.getElementById('extraCostBody').innerHTML = ''; calcExtraSum(); renderGantt(); ganttModal.hide();
     }
@@ -39,7 +50,15 @@
                 // 💡 이전버전: 기본 title 속성 제거 - 커스텀 툴팁으로 대체 💡
                 // 메모 본문은 data-memo 속성에 저장 (커스텀 툴팁이 읽어감)
                 let memoDataAttr = memo ? `data-memo="${memo.replace(/"/g, '&quot;')}"` : '';
-                html += `<td class="gantt-cell ${bg} ${ganttState[key]?'gantt-active':''} ${memoClass}" data-key="${key}" ${memoDataAttr} onclick="toggleGantt('${key}')"></td>`;
+                const isPlanned = !!ganttState[key];
+                const isProgress = !!ganttProgressState[key];
+                
+                let stateClass = "";
+                if (isPlanned) stateClass += " gantt-active";
+                if (isProgress && isPlanned) stateClass += " gantt-progress";
+                if (isProgress && !isPlanned) stateClass += " gantt-progress-only";
+                
+                html += `<td class="gantt-cell ${bg} ${stateClass} ${memoClass}" data-key="${key}" ${memoDataAttr} onclick="toggleGantt('${key}')"></td>`;
             });
             html += `</tr>`;
         });
@@ -177,10 +196,43 @@
             hideGanttTooltip();
         }
     }, { passive: true });
+
+    function setGanttEditMode(mode) {
+        ganttEditMode = mode === "progress" ? "progress" : "plan";
+    
+        const planBtn = document.getElementById("btnGanttPlanMode");
+        const progressBtn = document.getElementById("btnGanttProgressMode");
+    
+        if (planBtn) {
+            planBtn.className = ganttEditMode === "plan"
+                ? "btn btn-sm btn-primary px-2 fw-bold text-nowrap"
+                : "btn btn-sm btn-outline-primary px-2 fw-bold text-nowrap";
+        }
+    
+        if (progressBtn) {
+            progressBtn.className = ganttEditMode === "progress"
+                ? "btn btn-sm btn-warning px-2 fw-bold text-dark text-nowrap"
+                : "btn btn-sm btn-outline-warning px-2 fw-bold text-nowrap";
+        }
+    }
+
     function toggleGantt(key) {
-        // 💡 V35: 길게 눌러서 메모창이 떴다면 색칠 동작 차단 💡
-        if(isGanttLongPress) return;
-        ganttState[key] = !ganttState[key];
+        if (isGanttLongPress) return;
+    
+        if (ganttEditMode === "progress") {
+            if (ganttProgressState[key]) {
+                delete ganttProgressState[key];
+            } else {
+                ganttProgressState[key] = true;
+            }
+        } else {
+            if (ganttState[key]) {
+                delete ganttState[key];
+            } else {
+                ganttState[key] = true;
+            }
+        }
+    
         renderGantt();
     }
     function addGanttTaskRow() { ganttTasks.push("새 공종"); renderGantt(); }
@@ -189,19 +241,68 @@
     function removeGanttDate() { if(ganttDates.length > 1) { ganttDates.pop(); renderGantt(); } } 
 
     function prependGanttDate() {
-        if(ganttDates.length === 0) return;
-        let firstD = new Date(ganttDates[0]); firstD.setDate(firstD.getDate() - 1); ganttDates.unshift(firstD); 
+        if (ganttDates.length === 0) return;
+    
+        let firstD = new Date(ganttDates[0]);
+        firstD.setDate(firstD.getDate() - 1);
+        ganttDates.unshift(firstD);
+    
         let newState = {};
-        for (let tIdx = 0; tIdx < ganttTasks.length; tIdx++) { for (let dIdx = 0; dIdx < ganttDates.length - 1; dIdx++) { if (ganttState[`${tIdx}_${dIdx}`]) { newState[`${tIdx}_${dIdx + 1}`] = true; } } }
-        ganttState = newState; renderGantt();
+        let newProgressState = {};
+        let newMemos = {};
+    
+        for (let tIdx = 0; tIdx < ganttTasks.length; tIdx++) {
+            for (let dIdx = 0; dIdx < ganttDates.length - 1; dIdx++) {
+                if (ganttState[`${tIdx}_${dIdx}`]) {
+                    newState[`${tIdx}_${dIdx + 1}`] = true;
+                }
+    
+                if (ganttProgressState[`${tIdx}_${dIdx}`]) {
+                    newProgressState[`${tIdx}_${dIdx + 1}`] = true;
+                }
+    
+                if (ganttMemos[`${tIdx}_${dIdx}`]) {
+                    newMemos[`${tIdx}_${dIdx + 1}`] = ganttMemos[`${tIdx}_${dIdx}`];
+                }
+            }
+        }
+    
+        ganttState = newState;
+        ganttProgressState = newProgressState;
+        ganttMemos = newMemos;
+    
+        renderGantt();
     }
 
     function removeFirstGanttDate() {
-        if(ganttDates.length > 1) {
-            ganttDates.shift(); 
+        if (ganttDates.length > 1) {
+            ganttDates.shift();
+    
             let newState = {};
-            for (let tIdx = 0; tIdx < ganttTasks.length; tIdx++) { for (let dIdx = 1; dIdx <= ganttDates.length; dIdx++) { if (ganttState[`${tIdx}_${dIdx}`]) { newState[`${tIdx}_${dIdx - 1}`] = true; } } }
-            ganttState = newState; renderGantt();
+            let newProgressState = {};
+            let newMemos = {};
+    
+            for (let tIdx = 0; tIdx < ganttTasks.length; tIdx++) {
+                for (let dIdx = 1; dIdx <= ganttDates.length; dIdx++) {
+                    if (ganttState[`${tIdx}_${dIdx}`]) {
+                        newState[`${tIdx}_${dIdx - 1}`] = true;
+                    }
+    
+                    if (ganttProgressState[`${tIdx}_${dIdx}`]) {
+                        newProgressState[`${tIdx}_${dIdx - 1}`] = true;
+                    }
+    
+                    if (ganttMemos[`${tIdx}_${dIdx}`]) {
+                        newMemos[`${tIdx}_${dIdx - 1}`] = ganttMemos[`${tIdx}_${dIdx}`];
+                    }
+                }
+            }
+    
+            ganttState = newState;
+            ganttProgressState = newProgressState;
+            ganttMemos = newMemos;
+    
+            renderGantt();
         }
     }
 
@@ -316,6 +417,7 @@
             tasks: ganttTasks,
             dates: ganttDates.map(d => d.toISOString()),
             state: ganttState,
+            progressState: ganttProgressState,
             memos: ganttMemos,
             extra: extra,
             updatedAt: Date.now(),
@@ -463,9 +565,44 @@
         }).join("");
     }
     
-    async function loadGanttDoc(id) { const d = (await db.collection("gantt_logs").doc(id).get()).data(); currentGanttId = id; document.getElementById('ganttSiteName').value = d.site; ganttTasks = d.tasks; ganttState = d.state; ganttMemos = d.memos || {}; ganttDates = d.dates.map(str => new Date(str)); document.getElementById('extraCostBody').innerHTML = ''; d.extra.forEach(ex => addExtraCostRow(ex)); document.getElementById('ganttDashboard').style.display = 'block'; renderGantt(); calcExtraSum(); window.scrollTo(0,0); }
-    async function deleteGantt() { if(confirm("이 공정표를 삭제하시겠습니까?")) { if(currentGanttId) await db.collection("gantt_logs").doc(currentGanttId).delete(); document.getElementById('ganttDashboard').style.display = 'none'; currentGanttId=null; ganttMemos = {}; } }
-    async function tempEditGanttWriter(id) {
+    async function loadGanttDoc(id) {
+        const d = (await db.collection("gantt_logs").doc(id).get()).data();
+    
+        currentGanttId = id;
+        document.getElementById('ganttSiteName').value = d.site;
+    
+        ganttTasks = d.tasks || ganttTasks;
+        ganttState = d.state || {};
+        ganttProgressState = d.progressState || {};
+        ganttMemos = d.memos || {};
+        ganttDates = (d.dates || []).map(str => new Date(str));
+    
+        ganttEditMode = "plan";
+        setGanttEditMode("plan");
+    
+        document.getElementById('extraCostBody').innerHTML = '';
+        (d.extra || []).forEach(ex => addExtraCostRow(ex));
+    
+        document.getElementById('ganttDashboard').style.display = 'block';
+    
+        renderGantt();
+        calcExtraSum();
+        window.scrollTo(0, 0);
+    }
+    async function deleteGantt() {
+        if (confirm("이 공정표를 삭제하시겠습니까?")) {
+            if (currentGanttId) await db.collection("gantt_logs").doc(currentGanttId).delete();
+    
+            document.getElementById('ganttDashboard').style.display = 'none';
+    
+            currentGanttId = null;
+            ganttState = {};
+            ganttProgressState = {};
+            ganttMemos = {};
+            ganttEditMode = "plan";
+            setGanttEditMode("plan");
+        }
+    }
         if (!(myRole === "owner" || myRole === "admin")) {
             alert("작성자 수정 권한이 없습니다.");
             return;
@@ -557,3 +694,4 @@ window.tempEditGanttWriter = tempEditGanttWriter;
 window.toggleGanttCompleted = toggleGanttCompleted;
 window.loadGanttDoc = loadGanttDoc;
 window.deleteGantt = deleteGantt;
+window.setGanttEditMode = setGanttEditMode;
